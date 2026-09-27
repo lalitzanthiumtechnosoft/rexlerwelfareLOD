@@ -1,0 +1,51 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldSun" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC107" />
+      <stop offset="100%" stop-color="#FF9800" />
+    </linearGradient>
+    <linearGradient id="greenMan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4CAF50" />
+      <stop offset="100%" stop-color="#2E7D32" />
+    </linearGradient>
+    <linearGradient id="blueMan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2196F3" />
+      <stop offset="100%" stop-color="#1565C0" />
+    </linearGradient>
+    <linearGradient id="redMan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F44336" />
+      <stop offset="100%" stop-color="#C62828" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sun Rays Arch at Top -->
+  <g transform="translate(0, -10)">
+    <!-- Sun Arch Ring -->
+    <path d="M 110 200 A 170 170 0 0 1 402 200" stroke="url(#goldSun)" stroke-width="20" fill="none" stroke-linecap="round" />
+    <!-- 7 Triangular Rays -->
+    <polygon points="120,160 145,100 170,145" fill="url(#goldSun)" />
+    <polygon points="175,120 205,65 225,110" fill="url(#goldSun)" />
+    <polygon points="235,95 256,40 277,95" fill="url(#goldSun)" />
+    <polygon points="287,110 307,65 337,120" fill="url(#goldSun)" />
+    <polygon points="342,145 367,100 392,160" fill="url(#goldSun)" />
+    <polygon points="85,210 50,185 105,175" fill="url(#goldSun)" />
+    <polygon points="427,210 462,185 407,175" fill="url(#goldSun)" />
+  </g>
+
+  <!-- Golden Hands Embrace at Bottom -->
+  <path d="M 60 220 C 50 360 180 470 256 475 C 332 470 462 360 452 220 C 440 330 340 430 256 430 C 172 430 72 330 60 220 Z" fill="url(#goldSun)" />
+  <path d="M 100 300 C 150 400 220 420 256 420 C 292 420 362 400 412 300 C 370 380 290 400 256 400 C 222 400 142 380 100 300 Z" fill="url(#goldSun)" opacity="0.8" />
+
+  <!-- 3 Human Figures in Center -->
+  <!-- Middle Blue Figure -->
+  <circle cx="256" cy="145" r="22" fill="url(#blueMan)" />
+  <path d="M 256 180 C 210 180 160 220 200 370 C 225 310 240 250 256 220 C 272 250 287 310 312 370 C 352 220 302 180 256 180 Z" fill="url(#blueMan)" />
+
+  <!-- Left Green Figure -->
+  <circle cx="155" cy="270" r="20" fill="url(#greenMan)" />
+  <path d="M 155 300 C 100 300 70 330 180 390 C 185 340 195 290 225 250 C 180 240 150 270 155 300 Z" fill="url(#greenMan)" />
+
+  <!-- Right Red Figure -->
+  <circle cx="357" cy="270" r="20" fill="url(#redMan)" />
+  <path d="M 357 300 C 412 300 442 330 332 390 C 327 340 317 290 287 250 C 332 240 362 270 357 300 Z" fill="url(#redMan)" />
+</svg>
