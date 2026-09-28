@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Lock, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { UserRound, Mail, LockKeyhole, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 import { registerUser } from '../../services/api';
 
@@ -59,21 +59,15 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
   };
 
   return (
-    <div className="rexler-card">
-      {/* Top Nav inside card: Home | Login */}
-      <div className="card-top-nav">
-        <span className="card-nav-link" onClick={() => window.location.reload()}>Home</span>
-        <span className="card-nav-divider">|</span>
-        <span className="card-nav-link" onClick={onSwitchToLogin}>Login</span>
-      </div>
+    <section className="auth-card auth-card-register" aria-labelledby="auth-title">
+      <nav className="auth-card-nav" aria-label="Account navigation">
+        <button type="button" onClick={() => window.location.reload()}>Home</button>
+        <span aria-hidden="true">|</span>
+        <button type="button" onClick={onSwitchToLogin}>Login</button>
+      </nav>
 
-      {/* Rexler Logo */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-        <img src={logoImg} alt="Rexler Logo" style={{ height: '70px', width: 'auto', objectFit: 'contain' }} />
-      </div>
-
-      {/* Title */}
-      <h2 className="rexler-heading">Sign Up</h2>
+      <img className="auth-logo" src={logoImg} alt="Rexler Welfare Foundation" />
+      <h1 className="auth-title" id="auth-title">Sign Up</h1>
 
       {/* Messages */}
       {errorMsg && (
@@ -91,12 +85,12 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
       )}
 
       {/* Form */}
-      <form className="rexler-form" onSubmit={handleSubmit}>
+      <form className="auth-form" onSubmit={handleSubmit}>
         {/* Name input */}
-        <div className="rexler-input-wrapper">
+        <label className="auth-input-wrap">
           <input
             type="text"
-            className="rexler-input"
+            className="auth-input"
             placeholder="Full Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -104,16 +98,14 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
             required
             autoComplete="name"
           />
-          <div className="rexler-input-icon-box">
-            <User size={18} />
-          </div>
-        </div>
+          <span className="auth-input-icon"><UserRound size={15} /></span>
+        </label>
 
         {/* Email input */}
-        <div className="rexler-input-wrapper">
+        <label className="auth-input-wrap">
           <input
             type="email"
-            className="rexler-input"
+            className="auth-input"
             placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -121,16 +113,14 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
             required
             autoComplete="email"
           />
-          <div className="rexler-input-icon-box">
-            <Mail size={18} />
-          </div>
-        </div>
+          <span className="auth-input-icon"><Mail size={15} /></span>
+        </label>
 
         {/* Password input */}
-        <div className="rexler-input-wrapper">
+        <label className="auth-input-wrap">
           <input
             type={showPassword ? 'text' : 'password'}
-            className="rexler-input"
+            className="auth-input"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -138,19 +128,20 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
             required
             autoComplete="new-password"
           />
-          <div 
-            className="rexler-input-icon-box"
+          <button
+            className="auth-input-icon auth-input-action"
+            type="button"
             onClick={() => setShowPassword(!showPassword)}
-            style={{ cursor: 'pointer' }}
             title={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            {showPassword ? <EyeOff size={18} /> : <Lock size={18} />}
-          </div>
-        </div>
+            {showPassword ? <EyeOff size={15} /> : <LockKeyhole size={15} />}
+          </button>
+        </label>
 
         {/* Sub-links */}
-        <div className="rexler-links-container">
-          <div className="rexler-subtext">
+        <div className="auth-links">
+          <div className="auth-switch-prompt">
             Already have an account? 
             <button type="button" onClick={onSwitchToLogin}>
               Login
@@ -159,7 +150,7 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
         </div>
 
         {/* SIGN UP Button */}
-        <button type="submit" className="rexler-submit-btn" disabled={isLoading}>
+        <button type="submit" className="auth-submit-btn" disabled={isLoading}>
           {isLoading ? (
             <div className="spinner"></div>
           ) : (
@@ -167,6 +158,6 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
           )}
         </button>
       </form>
-    </div>
+    </section>
   );
 };

@@ -8,7 +8,7 @@ import faviconImg from '../../../assets/favicon.png';
 export type ActiveViewType = 
   | 'dashboard'
   | 'my_profile' | 'change_password' | 'transaction_password' | 'bank_details' | 'id_card'
-  | 'team_purchase' | 'global_purchase' | 'sahayata' | 'fund' | 'team_network' | 'financial' | 'withdrawal' | 'support';
+  | 'team_purchase' | 'global_purchase' | 'sahayata' | 'fund' | 'team_network' | 'direct_referrals' | 'team_tree_downline' | 'financial' | 'team_daily_income' | 'withdrawal' | 'support';
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -153,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
 
           {/* 7. TEAM & NETWORK */}
-          <button className={`sidebar-item ${activeView === 'team_network' ? 'active' : ''}`} onClick={() => toggleAccordion('team')}>
+          <button className={`sidebar-item ${['team_network', 'direct_referrals', 'team_tree_downline'].includes(activeView) ? 'active' : ''}`} onClick={() => toggleAccordion('team')}>
             <Users size={18} />
             <span>Team & Network</span>
             {openAccordions['team'] ? <ChevronDown size={16} className="sidebar-chevron" /> : <ChevronRight size={16} className="sidebar-chevron" />}
@@ -161,17 +161,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {openAccordions['team'] && (
             <div className="sidebar-submenu">
-              <button className="sidebar-subitem" onClick={() => onSelectView('team_network')}>
+              <button className={`sidebar-subitem ${activeView === 'direct_referrals' ? 'active' : ''}`} onClick={() => onSelectView('direct_referrals')}>
                 <span className="sub-dash-prefix">-</span><span>Direct Referrals</span>
               </button>
-              <button className="sidebar-subitem" onClick={() => onSelectView('team_network')}>
+              <button className={`sidebar-subitem ${activeView === 'team_tree_downline' ? 'active' : ''}`} onClick={() => onSelectView('team_tree_downline')}>
                 <span className="sub-dash-prefix">-</span><span>Team Tree Downline</span>
               </button>
             </div>
           )}
 
           {/* 8. FINANCIAL REPORT */}
-          <button className={`sidebar-item ${activeView === 'financial' ? 'active' : ''}`} onClick={() => toggleAccordion('financial')}>
+          <button className={`sidebar-item ${['financial', 'team_daily_income'].includes(activeView) ? 'active' : ''}`} onClick={() => toggleAccordion('financial')}>
             <FileText size={18} />
             <span>Financial Report</span>
             {openAccordions['financial'] ? <ChevronDown size={16} className="sidebar-chevron" /> : <ChevronRight size={16} className="sidebar-chevron" />}
@@ -182,8 +182,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button className="sidebar-subitem" onClick={() => onSelectView('financial')}>
                 <span className="sub-dash-prefix">-</span><span>Income Statement</span>
               </button>
-              <button className="sidebar-subitem" onClick={() => onSelectView('financial')}>
-                <span className="sub-dash-prefix">-</span><span>Daily Matrix Income</span>
+              <button className={`sidebar-subitem ${activeView === 'team_daily_income' ? 'active' : ''}`} onClick={() => onSelectView('team_daily_income')}>
+                <span className="sub-dash-prefix">-</span><span>Daily Field Expenses Income</span>
               </button>
             </div>
           )}

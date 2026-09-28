@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Base API configuration
 const API_BASE_URL = '/api';
+const BACKEND_HEALTH_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -60,6 +61,59 @@ export interface AuthUser {
   created_at?: string;
 }
 
+export interface DirectReferral {
+  memberId: number;
+  userId: string;
+  name: string;
+  email: string | null;
+  phone: string;
+  registeredAt: string | null;
+  activeAt: string | null;
+  topupFlag: number;
+}
+
+export interface TeamTreeMember {
+  memberId: number;
+  level: number;
+  userId: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  joinedAt: string | null;
+  activeAt: string | null;
+  topupStatus: number;
+}
+
+export interface TeamLevelCount {
+  level: number;
+  totalMembers: number;
+}
+
+export interface DailyIncomeSummary {
+  summaryId: number;
+  incomeStatus: number;
+  dailyIncome: number | string;
+  level: number;
+  createdAt: string;
+  releaseStatus: number;
+  userId: string;
+  name: string;
+  incomeGet: number | string;
+}
+
+export interface DailyIncomeDetail {
+  id: number;
+  userId: string | null;
+  name: string | null;
+  dailyAmount: number | string;
+  releaseDate: string;
+}
+
+export interface DashboardResponse {
+  user?: AuthUser;
+  directReferrals?: DirectReferral[];
+}
+
 export interface LoginResponse {
   message: string;
   token?: string;
@@ -96,9 +150,9 @@ export const loginUser = async (payload: LoginPayload): Promise<LoginResponse> =
   }
 };
 
-export const fetchDashboardData = async () => {
+export const fetchDashboardData = async (): Promise<DashboardResponse> => {
   try {
-    const response = await api.get('/dashboard');
+    const response = await api.get<DashboardResponse>('/dashboard');
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -108,9 +162,57 @@ export const fetchDashboardData = async () => {
   }
 };
 
+export const fetchTeamLevelCounts = async (): Promise<TeamLevelCount[]> => {
+  try {
+    const response = await api.get<{ levels: TeamLevelCount[] }>('/dashboard/team-tree');
+    return response.data.levels;
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || 'Failed to load team levels');
+  }
+};
+
+export const fetchTeamLevelMembers = async (level: number): Promise<TeamTreeMember[]> => {
+  try {
+    const response = await api.get<{ members: TeamTreeMember[] }>(`/dashboard/team-tree/${level}`);
+    return response.data.members;
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || 'Failed to load level members');
+  }
+};
+
+export const fetchDailyIncome = async (): Promise<DailyIncomeSummary[]> => {
+  try {
+    const response = await api.get<{ incomeRows: DailyIncomeSummary[] }>('/dashboard/daily-income');
+    return response.data.incomeRows;
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || 'Failed to load daily income');
+  }
+};
+
+export const fetchDailyIncomeDetails = async (summaryId: number): Promise<DailyIncomeDetail[]> => {
+  try {
+    const response = await api.get<{ details: DailyIncomeDetail[] }>(`/dashboard/daily-income/${summaryId}`);
+    return response.data.details;
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error(error.message || 'Failed to load income details');
+  }
+};
+
 export const checkHealth = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/');
+    const response = await axios.get(`${BACKEND_HEALTH_URL}/`, { timeout: 5000 });
     return response.status === 200;
   } catch (err) {
     return false;

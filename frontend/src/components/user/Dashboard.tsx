@@ -5,9 +5,12 @@ import {
   Share2, Lock, Building, Save, KeyRound, Menu, ArrowUpRight, ChevronDown, LogOut
 } from 'lucide-react';
 import { Sidebar } from './includes/Sidebar';
+import DirectReferalTeam from './directReferalTeam';
+import LevelTeam from './levelTeam';
+import TeamDailyIncome from './teamDailyIncome';
 import type { ActiveViewType } from './includes/Sidebar';
-import { fetchDashboardData } from '../../services/api';
-import type { AuthUser } from '../../services/api';
+import { fetchDashboardData, fetchTeamLevelCounts, fetchTeamLevelMembers } from '../../services/api';
+import type { AuthUser, DirectReferral, TeamLevelCount, TeamTreeMember } from '../../services/api';
 import faviconImg from '../../assets/favicon.png';
 import logoImg from '../../assets/logo.png';
 
@@ -17,8 +20,18 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
+type TeamTreePageData =
+  | { kind: 'levels'; levels: TeamLevelCount[] }
+  | { kind: 'members'; level: number; members: TeamTreeMember[] };
+
 export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogout }) => {
   const [dashboardUser, setDashboardUser] = useState<AuthUser>(initialUser);
+  const [directReferrals, setDirectReferrals] = useState<DirectReferral[]>([]);
+  const [dashboardLoaded, setDashboardLoaded] = useState(false);
+  const [dashboardLoadError, setDashboardLoadError] = useState<string | null>(null);
+  const [teamTreePage, setTeamTreePage] = useState<TeamTreePageData | null>(null);
+  const [selectedTeamLevel, setSelectedTeamLevel] = useState<number | null>(null);
+  const [teamTreeError, setTeamTreeError] = useState<string | null>(null);
   const [copyNotification, setCopyNotification] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -36,20 +49,70 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
   const loadData = async () => {
     try {
       const data = await fetchDashboardData();
+       console.log('Dashboard Data:', data);
       if (data.user) {
         setDashboardUser((prev) => ({ ...prev, ...data.user }));
       }
-    } catch (err: any) {
-      console.error('Failed to load dashboard statistics:', err);
+      if (Array.isArray(data.directReferrals)) {
+        setDirectReferrals(data.directReferrals);
+      }
+      setDashboardLoadError(null);
+      setDashboardLoaded(true);
+    } catch (error: unknown) {
+      console.error('Failed to load dashboard statistics:', error);
+      setDashboardLoadError(error instanceof Error ? error.message : 'Dashboard data could not be loaded.');
+      setDashboardLoaded(true);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const initialLoad = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    const intervalId = setInterval(() => {
+      loadData();
+    }, 15000);
+
+    return () => {
+      window.clearTimeout(initialLoad);
+      clearInterval(intervalId);
+    };
   }, []);
 
-  const userIdStr = String(dashboardUser.userId || dashboardUser.id || 'RWF016677031');
-  const userNameStr = dashboardUser.name || 'KUNDAN SHARMA';
+  useEffect(() => {
+    if (activeView !== 'team_tree_downline') return;
+
+    let cancelled = false;
+    const request = selectedTeamLevel === null
+      ? fetchTeamLevelCounts().then((levels) => ({ kind: 'levels' as const, levels }))
+      : fetchTeamLevelMembers(selectedTeamLevel).then((members) => ({
+          kind: 'members' as const,
+          level: selectedTeamLevel,
+          members
+        }));
+
+    request
+      .then((page) => {
+        if (!cancelled) {
+          setTeamTreePage(page);
+          setTeamTreeError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setTeamTreeError(error instanceof Error ? error.message : 'Failed to load team data.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeView, selectedTeamLevel]);
+
+  const userIdStr = String(dashboardUser.userId || dashboardUser.id || 'RWFXXXXXXX');
+  const userNameStr = dashboardUser.name || 'Rexler Welfare User';
+  const isUserActive = Number(dashboardUser.topupFlag ?? 0) === 1;
   const referralUrl = `https://rexlerwelfarefoundation.online/authUserRegister?affiliateCode=${userIdStr}`;
 
   const handleCopyLink = () => {
@@ -96,10 +159,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
   };
 
   const handleSelectView = (view: ActiveViewType) => {
+    if (view === 'team_tree_downline') {
+      setSelectedTeamLevel(null);
+      setTeamTreePage(null);
+      setTeamTreeError(null);
+    }
     setActiveView(view);
     setIsMobileOpen(false);
     setIsUserMenuOpen(false);
   };
+
+  const currentLevelSummary = teamTreePage?.kind === 'levels' ? teamTreePage.levels : null;
+  const currentLevelMembers = teamTreePage?.kind === 'members' && teamTreePage.level === selectedTeamLevel
+    ? teamTreePage.members
+    : null;
 
   return (
     <div className="dashboard-layout">
@@ -135,7 +208,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
               {activeView === 'sahayata' && 'Sahayata Rashi'}
               {activeView === 'fund' && 'Fund Management'}
               {activeView === 'team_network' && 'Team & Network'}
+              {activeView === 'direct_referrals' && 'Direct Referrals'}
+              {activeView === 'team_tree_downline' && (selectedTeamLevel === null ? 'Level Team' : `Level ${selectedTeamLevel} Team`)}
               {activeView === 'financial' && 'Financial Report'}
+              {activeView === 'team_daily_income' && 'Daily Field Expenses Income'}
               {activeView === 'withdrawal' && 'Withdrawal Statement'}
               {activeView === 'support' && 'Helpdesk Support'}
             </h2>
@@ -193,6 +269,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
               <div>{profileSavedMsg}</div>
             </div>
           )}
+          {dashboardLoadError && (
+            <div className="alert-box error" role="alert">
+              {dashboardLoadError.includes('Invalid or expired token')
+                ? 'Session expired. Please sign out and sign in again to load dashboard and referral data.'
+                : dashboardLoadError}
+            </div>
+          )}
 
           {/* 1. MAIN DASHBOARD VIEW */}
           {activeView === 'dashboard' && (
@@ -231,7 +314,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                   <div className="widget-body">
                     <div className="widget-title">{userNameStr}</div>
                     <div className="widget-value" style={{ fontSize: '1.15rem' }}>{userIdStr}</div>
-                    {dashboardUser.topupFlag === 1 ? (
+                    {isUserActive ? (
                       <span className="active-status-badge">ACTIVE</span>
                     ) : (
                       <span className="inactive-status-badge">IN-ACTIVE</span>
@@ -390,7 +473,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>ACCOUNT STATUS</label>
                   <div style={{ padding: '0.65rem 1rem', background: '#e6fffa', color: '#047857', fontWeight: 700, borderRadius: '4px', marginTop: '4px' }}>
-                    {dashboardUser.topupFlag === 1 ? 'ACTIVE MEMBER' : 'IN-ACTIVE'}
+                    {isUserActive ? 'ACTIVE MEMBER' : 'IN-ACTIVE'}
                   </div>
                 </div>
               </div>
@@ -544,6 +627,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
               </div>
             </div>
           )}
+
+          {activeView === 'direct_referrals' && (
+            <DirectReferalTeam referrals={directReferrals} loading={!dashboardLoaded} error={dashboardLoadError} />
+          )}
+
+          {activeView === 'team_tree_downline' && (
+            <LevelTeam
+              selectedLevel={selectedTeamLevel}
+              levels={currentLevelSummary}
+              members={currentLevelMembers}
+              error={teamTreeError}
+              onSelectLevel={(level) => {
+                setTeamTreePage(null);
+                setTeamTreeError(null);
+                setSelectedTeamLevel(level);
+              }}
+              onBack={() => {
+                setTeamTreePage(null);
+                setTeamTreeError(null);
+                setSelectedTeamLevel(null);
+              }}
+            />
+          )}
+
+          {activeView === 'team_daily_income' && <TeamDailyIncome />}
 
           {/* 7. GENERIC SECTION PLACEHOLDER VIEWS */}
           {['team_purchase', 'global_purchase', 'sahayata', 'fund', 'team_network', 'financial', 'withdrawal', 'support'].includes(activeView) && (
