@@ -28,42 +28,23 @@ router.get('/', verifyToken, async (req: AuthRequest, res: Response): Promise<vo
                 [PACKAGE_ID]
             ),
             pool.query(`
-                SELECT history.*
-                FROM (
-                    SELECT
-                        activation.dateTime,
-                        activation.packageId,
-                        activation.packagePrice,
-                        beneficiary.user_id AS userId,
-                        beneficiary.name,
-                        purchaser.user_id AS purchaserId,
-                        purchaser.name AS purchaserName
-                    FROM meddolic_user_team_activation_details AS activation
-                    INNER JOIN meddolic_user_details AS beneficiary
-                        ON beneficiary.member_id = activation.memberId
-                    INNER JOIN meddolic_user_details AS purchaser
-                        ON purchaser.member_id = activation.activateBy
-                    WHERE activation.activateBy = ?
-                    UNION ALL
-                    SELECT
-                        activation.dateTime,
-                        activation.packageId,
-                        activation.packagePrice,
-                        beneficiary.user_id AS userId,
-                        beneficiary.name,
-                        purchaser.user_id AS purchaserId,
-                        purchaser.name AS purchaserName
-                    FROM meddolic_user_team_activation_details AS activation
-                    INNER JOIN meddolic_user_details AS beneficiary
-                        ON beneficiary.member_id = activation.memberId
-                    INNER JOIN meddolic_user_details AS purchaser
-                        ON purchaser.member_id = activation.activateBy
-                    WHERE activation.memberId = ?
-                        AND activation.activateBy <> ?
-                ) AS history
-                ORDER BY history.dateTime DESC
+                SELECT
+                    activation.dateTime,
+                    activation.packageId,
+                    activation.packagePrice,
+                    beneficiary.user_id AS userId,
+                    beneficiary.name,
+                    purchaser.user_id AS purchaserId,
+                    purchaser.name AS purchaserName
+                FROM meddolic_user_team_activation_details AS activation
+                STRAIGHT_JOIN meddolic_user_details AS beneficiary
+                    ON beneficiary.member_id = activation.memberId
+                STRAIGHT_JOIN meddolic_user_details AS purchaser
+                    ON purchaser.member_id = activation.activateBy
+                WHERE activation.activateBy = ?
+                ORDER BY activation.dateTime DESC
                 LIMIT 100
-            `, [memberId, memberId, memberId])
+            `, [memberId])
         ]);
 
         const wallets = walletRows[0] as any[];
@@ -283,16 +264,15 @@ router.post('/', verifyToken, async (req: AuthRequest, res: Response): Promise<v
         if (eligibleSummaries.length) {
             const values = eligibleSummaries.map((summary: any) => [
                 summary.memberId,
+                summary.level,
                 summary.dailyIncome,
-                summary.level,
                 summary.upgradeIncome,
-                summary.level,
                 summary.incomeDays
             ]);
-            const placeholders = values.map(() => '(?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY), NOW(), ?)').join(', ');
+            const placeholders = values.map(() => '(?, 0, ?, 0, ?, 0, ?, 0, DATE_ADD(NOW(), INTERVAL 1 DAY), NOW(), ?)').join(', ');
             await connection.query(`
                 INSERT INTO meddolic_user_level_income_summary
-                    (memberId, dailyLevelIncome, level, packagePrice, packageId, dueDate, dateTime, incomeDays)
+                    (memberId, childId, level, levelIncome, dailyLevelIncome, levelPercent, packagePrice, packageId, dueDate, dateTime, incomeDays)
                 VALUES ${placeholders}
             `, values.flat());
         }

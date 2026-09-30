@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import teamPurchaseRoutes from './routes/teamPurchaseRoutes';
+import autopoolPurchaseRoutes from './routes/autopoolPurchaseRoutes';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(cors());
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/team-purchase', teamPurchaseRoutes);
+app.use('/api/autopool-purchase', autopoolPurchaseRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('API is running smoothly...');

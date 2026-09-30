@@ -9,6 +9,7 @@ import DirectReferalTeam from './directReferalTeam';
 import LevelTeam from './levelTeam';
 import TeamDailyIncome from './teamDailyIncome';
 import TeamPackagePurchase from './packagePurchase';
+import AutopoolPurchase from './autopoolPurchase';
 import type { ActiveViewType } from './includes/Sidebar';
 import { fetchDashboardData, fetchTeamLevelCounts, fetchTeamLevelMembers } from '../../services/api';
 import type { AuthUser, DirectReferral, TeamLevelCount, TeamTreeMember } from '../../services/api';
@@ -205,7 +206,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
               {activeView === 'bank_details' && 'Bank Details'}
               {activeView === 'id_card' && 'Member ID Card'}
               {activeView === 'team_purchase' && 'Team Purchase Package'}
-              {activeView === 'global_purchase' && 'Global Purchase Package'}
+              {activeView === 'global_purchase' && 'Helping Fund Purchase Package'}
               {activeView === 'sahayata' && 'Sahayata Rashi'}
               {activeView === 'fund' && 'Fund Management'}
               {activeView === 'team_network' && 'Team & Network'}
@@ -655,9 +656,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
           {activeView === 'team_daily_income' && <TeamDailyIncome />}
 
           {activeView === 'team_purchase' && <TeamPackagePurchase />}
+          {activeView === 'global_purchase' && <AutopoolPurchase />}
 
           {/* 7. GENERIC SECTION PLACEHOLDER VIEWS */}
-          {['global_purchase', 'sahayata', 'fund', 'team_network', 'financial', 'withdrawal', 'support'].includes(activeView) && (
+          {['sahayata', 'fund', 'team_network', 'financial', 'withdrawal', 'support'].includes(activeView) && (
             <div style={{ background: '#ffffff', borderRadius: '12px', padding: '2.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', maxWidth: '800px', textAlign: 'center' }}>
               <div style={{ width: '60px', height: '60px', background: '#e6fffa', color: '#00b894', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto' }}>
                 <ArrowUpRight size={30} />

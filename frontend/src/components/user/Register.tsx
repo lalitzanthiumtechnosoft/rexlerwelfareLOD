@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, BadgeCheck, CheckCircle2, Eye, EyeOff, Mail, Phone, UserRound, Users } from 'lucide-react';
+import { AlertCircle, BadgeCheck, Eye, EyeOff, Mail, Phone, UserRound, Users } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 import { fetchRegistrationOptions, lookupSponsor, registerUser } from '../../services/api';
 import type { RegistrationOption } from '../../services/api';
@@ -120,7 +120,7 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
   };
 
   return (
-    <section className="auth-card auth-card-register" aria-labelledby="auth-title">
+    <section className={`auth-card auth-card-register${createdUserId ? ' register-success-card' : ''}`} aria-labelledby="auth-title">
       <nav className="auth-card-nav" aria-label="Account navigation">
         <button type="button" onClick={() => window.location.reload()}>Home</button>
         <span aria-hidden="true">|</span>
@@ -128,31 +128,30 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
       </nav>
 
       <img className="auth-logo" src={logoImg} alt="Rexler Welfare Foundation" />
-      <h1 className="auth-title" id="auth-title">Create account</h1>
+      <h1 className="auth-title" id="auth-title">{createdUserId ? 'Registration successful!' : 'Create account'}</h1>
 
-      {/* Messages */}
-      {errorMsg && (
-        <div className="alert-box error" style={{ marginBottom: '1rem' }}>
-          <AlertCircle size={16} style={{ flexShrink: 0 }} />
-          <div>{errorMsg}</div>
+      {createdUserId ? (
+        <div className="register-success-content">
+          <p className="register-success-message">{successMsg || 'Your account has been created.'} Keep these sign-in details private.</p>
+          <dl className="register-credentials">
+            <div><dt>User ID</dt><dd>{createdUserId}</dd></div>
+            <div><dt>Name</dt><dd>{name}</dd></div>
+            <div><dt>Password</dt><dd>{password}</dd></div>
+            <div><dt>Transaction password</dt><dd>{transactionPassword}</dd></div>
+          </dl>
+          <button className="auth-submit-btn register-login-button" type="button" onClick={onSuccess}>
+            Sign in
+          </button>
         </div>
-      )}
-
-      {successMsg && (
-        <div className="alert-box success" style={{ marginBottom: '1rem' }}>
-          <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-          <div>{successMsg}{createdUserId && <strong className="register-created-user">Your user ID: {createdUserId}</strong>}</div>
-        </div>
-      )}
-
-      {createdUserId && (
-        <button className="auth-submit-btn register-login-button" type="button" onClick={onSuccess}>
-          Continue to login
-        </button>
-      )}
-
-      {/* Form */}
-      {!createdUserId && <form className="register-form" onSubmit={handleSubmit}>
+      ) : (
+        <>
+        {errorMsg && (
+          <div className="alert-box error" style={{ marginBottom: '1rem' }} role="alert">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <div>{errorMsg}</div>
+          </div>
+        )}
+        <form className="register-form" onSubmit={handleSubmit}>
         {optionsError && <div className="alert-box error register-options-error" role="alert">{optionsError}</div>}
         <div className="register-fields-grid">
           <label className="register-field register-field-wide">
@@ -231,7 +230,9 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
             'SIGN UP'
           )}
         </button>
-      </form>}
+        </form>
+        </>
+      )}
     </section>
   );
 };

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { BadgeCheck, CircleAlert, Clock3, Package, Search, Wallet } from 'lucide-react';
+import { BadgeCheck, CircleAlert, Clock3, Gift, Search, Wallet } from 'lucide-react';
 import {
-	fetchTeamPurchaseData,
-	lookupTeamPurchaseMember,
-	purchaseTeamPackage
+	fetchAutopoolPurchaseData,
+	lookupAutopoolMember,
+	purchaseAutopoolPackage
 } from '../../services/api';
-import type { TeamPurchaseData } from '../../services/api';
+import type { AutopoolPurchaseData } from '../../services/api';
 import './css/packagePurchase.css';
 
 const formatAmount = (amount: number | string) => Number(amount || 0).toLocaleString('en-IN', {
@@ -26,8 +26,8 @@ const formatDateTime = (value: string) => {
 	}).format(date);
 };
 
-const TeamPackagePurchase: React.FC = () => {
-	const [data, setData] = useState<TeamPurchaseData | null>(null);
+const AutopoolPurchase: React.FC = () => {
+	const [data, setData] = useState<AutopoolPurchaseData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [userId, setUserId] = useState('');
@@ -40,10 +40,10 @@ const TeamPackagePurchase: React.FC = () => {
 
 	const loadData = async () => {
 		try {
-			setData(await fetchTeamPurchaseData());
+			setData(await fetchAutopoolPurchaseData());
 			setLoadError(null);
 		} catch (error: unknown) {
-			setLoadError(error instanceof Error ? error.message : 'Could not load purchase details.');
+			setLoadError(error instanceof Error ? error.message : 'Could not load Helping Fund details.');
 		} finally {
 			setLoading(false);
 		}
@@ -51,7 +51,7 @@ const TeamPackagePurchase: React.FC = () => {
 
 	useEffect(() => {
 		let cancelled = false;
-		fetchTeamPurchaseData()
+		fetchAutopoolPurchaseData()
 			.then((purchaseData) => {
 				if (!cancelled) {
 					setData(purchaseData);
@@ -59,30 +59,23 @@ const TeamPackagePurchase: React.FC = () => {
 				}
 			})
 			.catch((error: unknown) => {
-				if (!cancelled) {
-					setLoadError(error instanceof Error ? error.message : 'Could not load purchase details.');
-				}
+				if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load Helping Fund details.');
 			})
 			.finally(() => {
 				if (!cancelled) setLoading(false);
 			});
-
-		return () => {
-			cancelled = true;
-		};
+		return () => { cancelled = true; };
 	}, []);
 
 	const verifyMember = async () => {
-		const normalizedUserId = userId.trim();
 		setVerifiedMember(null);
 		setLookupError(null);
-		if (!normalizedUserId) return;
-
+		if (!userId.trim()) return;
 		setLookupLoading(true);
 		try {
-			setVerifiedMember(await lookupTeamPurchaseMember(normalizedUserId));
+			setVerifiedMember(await lookupAutopoolMember(userId.trim()));
 		} catch (error: unknown) {
-			setLookupError(error instanceof Error ? error.message : 'Could not verify this member.');
+			setLookupError(error instanceof Error ? error.message : 'Could not verify active member.');
 		} finally {
 			setLookupLoading(false);
 		}
@@ -94,25 +87,25 @@ const TeamPackagePurchase: React.FC = () => {
 		setPurchaseError(null);
 		setSubmitting(true);
 		try {
-			const result = await purchaseTeamPackage(userId.trim());
+			const result = await purchaseAutopoolPackage(userId.trim());
 			setPurchaseMessage(result.message);
-			setVerifiedMember(null);
 			setUserId('');
+			setVerifiedMember(null);
 			await loadData();
 		} catch (error: unknown) {
-			setPurchaseError(error instanceof Error ? error.message : 'Package purchase failed.');
+			setPurchaseError(error instanceof Error ? error.message : 'Helping Fund purchase failed.');
 		} finally {
 			setSubmitting(false);
 		}
 	};
 
 	return (
-		<section className="team-purchase-view" aria-labelledby="team-purchase-heading">
+		<section className="team-purchase-view" aria-labelledby="autopool-heading">
 			<header className="team-purchase-header">
 				<div>
-					<p className="team-purchase-eyebrow">MEMBER SERVICES</p>
-					<h3 id="team-purchase-heading">Team package purchase</h3>
-					<p>Activate an eligible team member using your fund wallet.</p>
+					<p className="team-purchase-eyebrow">HELPING FUND</p>
+					<h3 id="autopool-heading">Helping Fund Purchase Package</h3>
+					<p>Purchase an active member's pool package using your fund wallet.</p>
 				</div>
 				<div className="team-purchase-wallet" aria-label="Fund wallet balance">
 					<Wallet size={18} />
@@ -121,51 +114,31 @@ const TeamPackagePurchase: React.FC = () => {
 				</div>
 			</header>
 
-			{loadError && (
-				<div className="team-purchase-alert is-error" role="alert">
-					<CircleAlert size={17} /> <span>{loadError}</span>
-				</div>
-			)}
-			{purchaseMessage && (
-				<div className="team-purchase-alert is-success" role="status">
-					<BadgeCheck size={17} /> <span>{purchaseMessage}</span>
-				</div>
-			)}
-			{purchaseError && (
-				<div className="team-purchase-alert is-error" role="alert">
-					<CircleAlert size={17} /> <span>{purchaseError}</span>
-				</div>
-			)}
+			{loadError && <div className="team-purchase-alert is-error" role="alert"><CircleAlert size={17} /><span>{loadError}</span></div>}
+			{purchaseMessage && <div className="team-purchase-alert is-success" role="status"><BadgeCheck size={17} /><span>{purchaseMessage}</span></div>}
+			{purchaseError && <div className="team-purchase-alert is-error" role="alert"><CircleAlert size={17} /><span>{purchaseError}</span></div>}
 
 			<div className="team-purchase-main">
 				<form className="team-purchase-form" onSubmit={(event) => void handlePurchase(event)}>
 					<div className="team-purchase-form-heading">
-						<span className="team-purchase-icon"><Package size={19} /></span>
-						<div>
-							<h4>Package 1</h4>
-							<p>One-time team activation</p>
-						</div>
+						<span className="team-purchase-icon"><Gift size={19} /></span>
+						<div><h4>Helping Fund Package {data?.package.packageId ?? ''}</h4><p>Pool activation package</p></div>
 						<strong>{loading ? '...' : `₹ ${formatAmount(data?.package.packagePrice ?? 0)}`}</strong>
 					</div>
 
-					<label className="team-purchase-label" htmlFor="team-purchase-user-id">Member user ID</label>
+					<label className="team-purchase-label" htmlFor="autopool-member-id">Active member user ID</label>
 					<div className="team-purchase-input-row">
 						<input
-							id="team-purchase-user-id"
-							name="userId"
-							autoComplete="off"
-							maxLength={80}
-							placeholder="Enter member user ID"
+							id="autopool-member-id"
 							value={userId}
+							maxLength={80}
+							autoComplete="off"
+							placeholder="Enter active member user ID"
 							required
-							onChange={(event) => {
-								setUserId(event.target.value);
-								setVerifiedMember(null);
-								setLookupError(null);
-							}}
+							onChange={(event) => { setUserId(event.target.value); setVerifiedMember(null); setLookupError(null); }}
 							onBlur={() => void verifyMember()}
 						/>
-						<button className="team-purchase-lookup" type="button" onClick={() => void verifyMember()} disabled={lookupLoading || !userId.trim()} aria-label="Verify member">
+						<button className="team-purchase-lookup" type="button" onClick={() => void verifyMember()} disabled={lookupLoading || !userId.trim()} aria-label="Verify active member">
 							<Search size={17} />
 						</button>
 					</div>
@@ -185,24 +158,17 @@ const TeamPackagePurchase: React.FC = () => {
 				</form>
 			</div>
 
-			<section className="team-purchase-history" aria-labelledby="team-purchase-history-heading">
+			<section className="team-purchase-history" aria-labelledby="autopool-history-heading">
 				<div className="team-purchase-history-heading">
-					<div>
-						<h4 id="team-purchase-history-heading">My purchases for team</h4>
-						<p>Members whose packages were paid from your fund wallet</p>
-					</div>
-					<button type="button" onClick={() => void loadData()} disabled={loading} aria-label="Refresh purchase history">
-						<Clock3 size={16} /> Refresh
-					</button>
+					<div><h4 id="autopool-history-heading">Helping Fund purchase history</h4><p>Latest 100 purchase and activation records</p></div>
+					<button type="button" onClick={() => void loadData()} disabled={loading} aria-label="Refresh Helping Fund history"><Clock3 size={16} /> Refresh</button>
 				</div>
 				<div className="team-purchase-table-scroll">
 					<table className="team-purchase-table">
-						<thead>
-							<tr><th>#</th><th>Member</th><th>Package</th><th>Amount</th><th>Purchase date</th><th>Purchased by (User ID)</th></tr>
-						</thead>
+						<thead><tr><th>#</th><th>Member</th><th>Package</th><th>Amount</th><th>Purchase date</th><th>Purchased by (User ID)</th></tr></thead>
 						<tbody>
 							{loading ? (
-								<tr><td colSpan={6} className="team-purchase-empty">Loading purchase history...</td></tr>
+								<tr><td colSpan={6} className="team-purchase-empty">Loading Helping Fund history...</td></tr>
 							) : data?.history.length ? data.history.map((row, index) => (
 								<tr key={`${row.dateTime}-${row.userId}-${index}`}>
 									<td>{index + 1}</td>
@@ -213,7 +179,7 @@ const TeamPackagePurchase: React.FC = () => {
 									<td><strong>{row.purchaserName}</strong><span>{row.purchaserId}</span></td>
 								</tr>
 							)) : (
-								<tr><td colSpan={6} className="team-purchase-empty">You have not purchased packages for team members yet.</td></tr>
+								<tr><td colSpan={6} className="team-purchase-empty">No Helping Fund purchases found.</td></tr>
 							)}
 						</tbody>
 					</table>
@@ -223,4 +189,4 @@ const TeamPackagePurchase: React.FC = () => {
 	);
 };
 
-export default TeamPackagePurchase;
+export default AutopoolPurchase;

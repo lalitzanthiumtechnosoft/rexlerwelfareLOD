@@ -141,6 +141,22 @@ export interface TeamPurchaseData {
   history: TeamPurchaseHistoryRow[];
 }
 
+export interface AutopoolPurchaseHistoryRow {
+  dateTime: string;
+  packageId: number;
+  packagePrice: number | string;
+  userId: string;
+  name: string;
+  purchaserId: string;
+  purchaserName: string;
+}
+
+export interface AutopoolPurchaseData {
+  wallet: number;
+  package: TeamPurchasePackage & { giveAmount: number | string };
+  history: AutopoolPurchaseHistoryRow[];
+}
+
 export interface DashboardResponse {
   user?: AuthUser;
   directReferrals?: DirectReferral[];
@@ -303,6 +319,43 @@ export const purchaseTeamPackage = async (userId: string): Promise<{ message: st
   } catch (error: any) {
     if (error.response?.data?.error) throw new Error(error.response.data.error);
     throw new Error(error.message || 'Package purchase failed');
+  }
+};
+
+export const fetchAutopoolPurchaseData = async (): Promise<AutopoolPurchaseData> => {
+  try {
+    const response = await api.get<AutopoolPurchaseData>('/autopool-purchase', { timeout: 30000 });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Failed to load Helping Fund purchase data');
+  }
+};
+
+export const lookupAutopoolMember = async (userId: string): Promise<{ userId: string; name: string }> => {
+  try {
+    const response = await api.get<{ member: { userId: string; name: string } }>('/autopool-purchase/lookup', {
+      params: { userId },
+      timeout: 15000
+    });
+    return response.data.member;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Failed to verify active member');
+  }
+};
+
+export const purchaseAutopoolPackage = async (userId: string): Promise<{ message: string; wallet: number }> => {
+  try {
+    const response = await api.post<{ message: string; wallet: number }>(
+      '/autopool-purchase',
+      { userId },
+      { timeout: 60000 }
+    );
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Helping Fund purchase failed');
   }
 };
 

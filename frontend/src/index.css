@@ -1555,8 +1555,15 @@ html, body {
 }
 .register-valid { display: inline-flex; align-items: center; gap: 3px; color: #77e0ad; }
 .register-invalid { color: #ff9d8e; }
-.register-created-user { display: block; margin-top: 5px; }
 .register-login-button { margin-top: 0; }
+.register-success-card { width: min(520px, calc(100vw - 32px)); }
+.register-success-content { text-align: left; }
+.register-success-message { margin: 0 0 16px; color: #d4dbe5; font: 12px/1.6 var(--font-body); }
+.register-credentials { display: grid; gap: 9px; margin: 0 0 18px; }
+.register-credentials > div { padding: 10px 12px; border: 1px solid rgba(211, 211, 230, 0.35); background: rgba(7, 12, 30, 0.55); }
+.register-credentials dt { margin-bottom: 4px; color: #91dce0; font: 600 10px var(--font-body); }
+.register-credentials dd { margin: 0; color: #fff; font: 500 13px var(--font-body); overflow-wrap: anywhere; user-select: text; }
+.register-success-card .register-login-button { display: block; }
 .register-options-error { grid-column: 1 / -1; }
 
 .auth-card-register .auth-links {

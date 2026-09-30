@@ -125,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* 4. GLOBAL PURCHASE PACKAGE */}
           <button className={`sidebar-item ${activeView === 'global_purchase' ? 'active' : ''}`} onClick={() => onSelectView('global_purchase')}>
             <Globe size={18} />
-            <span>Global Purchase Package</span>
+            <span>Helping Fund Purchase Package</span>
           </button>
 
           {/* 5. SAHAYATA RASHI */}

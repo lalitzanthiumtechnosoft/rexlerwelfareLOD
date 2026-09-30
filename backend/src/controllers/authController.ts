@@ -83,11 +83,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 
-    const [hashedPassword, hashedTransactionPassword] = await Promise.all([
-        bcrypt.hash(password, 10),
-        bcrypt.hash(transactionPassword, 10)
-    ]);
-
     let connection;
     try {
         connection = await pool.getConnection();
@@ -117,33 +112,29 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const [activePhoneRows]: any = await connection.query(
-            'SELECT COUNT(1) AS total FROM meddolic_user_details WHERE phone = ? AND account_status = 1',
-            [phone]
-        );
-        if (Number(activePhoneRows[0].total) >= 3) {
+        const [phoneRows]: any = await connection.query(`
+            SELECT member_id
+            FROM meddolic_user_details
+            WHERE phone = ?
+            LIMIT 1
+            FOR UPDATE
+        `, [phone]);
+        if (phoneRows.length) {
             await connection.rollback();
-            res.status(400).json({ error: 'This phone number is already associated with three active accounts.' });
+            res.status(409).json({ error: 'This phone number is already registered.' });
             return;
         }
 
-        const [emailRows]: any = await connection.query(
-            'SELECT COUNT(1) AS total FROM meddolic_user_details WHERE email_id = ? AND account_status = 1',
-            [email]
-        );
-        if (Number(emailRows[0].total) >= 3) {
+        const [emailRows]: any = await connection.query(`
+            SELECT member_id
+            FROM meddolic_user_details
+            WHERE email_id = ?
+            LIMIT 1
+            FOR UPDATE
+        `, [email]);
+        if (emailRows.length) {
             await connection.rollback();
-            res.status(400).json({ error: 'This email is already associated with three active accounts.' });
-            return;
-        }
-
-        const [allPhoneRows]: any = await connection.query(
-            'SELECT COUNT(1) AS total FROM meddolic_user_details WHERE phone = ?',
-            [phone]
-        );
-        if (Number(allPhoneRows[0].total) >= 3) {
-            await connection.rollback();
-            res.status(400).json({ error: 'This phone number is already associated with three accounts.' });
+            res.status(409).json({ error: 'This email is already registered.' });
             return;
         }
 
@@ -167,7 +158,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         let userId = '';
         for (let attempt = 0; attempt < 20; attempt += 1) {
-            const candidate = `RWF${randomInt(11, 100)}${randomInt(111, 1000)}`;
+            const candidate = `RWF${randomInt(100000000, 1000000000)}`;
             const [matches]: any = await connection.query(
                 'SELECT 1 FROM meddolic_user_details WHERE user_id = ? LIMIT 1',
                 [candidate]
@@ -186,9 +177,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         const [insertResult]: any = await connection.query(`
             INSERT INTO meddolic_user_details
                 (user_id, name, email_id, phone, password, trnPassword, sponser_id,
-                 date_time, registerDueDate, countryId, stateId, districtId)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 5 DAY), ?, ?, ?)
-        `, [userId, name, email, phone, hashedPassword, hashedTransactionPassword, sponsor.memberId, countryId, stateId, districtId]);
+                 date_time, registerDueDate, countryId, stateId, districtId, UPIid, qrimage)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 5 DAY), ?, ?, ?, '', '')
+        `, [userId, name, email, phone, password, transactionPassword, sponsor.memberId, countryId, stateId, districtId]);
         const memberId = Number(insertResult.insertId);
 
         const [ancestors]: any = await connection.query(`
@@ -267,14 +258,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             res.status(400).json({ error: 'Invalid user_id or password' });
             return;
         }
-        if (!isHashedPassword) {
-            const upgradedPassword = await bcrypt.hash(String(password), 10);
-            await pool.query(
-                'UPDATE meddolic_user_details SET password = ? WHERE member_id = ?',
-                [upgradedPassword, user.member_id]
-            );
-        }
-
         // Safe secret fallback in case JWT_SECRET is missing in .env
         const secretKey = process.env.JWT_SECRET || JWT_SECRET || 'rexler_secret_key_123';
 
