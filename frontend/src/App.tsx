@@ -23,6 +23,8 @@ export const App: React.FC = () => {
         }
       }
       setActiveTab('dashboard');
+    } else if (new URLSearchParams(window.location.search).has('affiliateCode')) {
+      setActiveTab('register');
     }
   }, []);
 

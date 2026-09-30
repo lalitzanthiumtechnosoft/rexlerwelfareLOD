@@ -1451,15 +1451,117 @@ html, body {
 }
 
 .auth-card-register {
-  padding-bottom: 40px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 21px 40px 36px;
 }
 
 .auth-card-register .auth-title {
   margin-bottom: 16px;
 }
 
-.auth-card-register .auth-form {
-  gap: 10px;
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.register-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.register-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  color: #e6e9f1;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.register-field-wide { grid-column: 1 / -1; }
+
+.register-field input,
+.register-field select {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(211, 211, 230, 0.48);
+  border-radius: 3px;
+  outline: none;
+  background: rgba(7, 12, 30, 0.72);
+  color: #fff;
+  font: 400 12px var(--font-body);
+}
+
+.register-field select { color-scheme: dark; }
+.register-field input:focus,
+.register-field select:focus { border-color: #00dcf6; box-shadow: 0 0 0 2px rgba(0, 220, 246, 0.15); }
+.register-field input:disabled,
+.register-field select:disabled { opacity: 0.65; }
+
+.register-field small {
+  min-height: 14px;
+  color: #aeb9c8;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.register-sponsor-control,
+.register-input-icon { position: relative; }
+.register-sponsor-control input { padding-right: 42px; }
+.register-sponsor-control button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  width: 38px;
+  height: 100%;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid rgba(211, 211, 230, 0.35);
+  background: transparent;
+  color: #71e1e9;
+  cursor: pointer;
+}
+.register-sponsor-control button:disabled { opacity: 0.5; cursor: wait; }
+.register-input-icon > svg {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: #9eafc2;
+  pointer-events: none;
+}
+.register-input-icon input { padding-left: 34px; }
+.register-input-icon input.register-password-input { padding-left: 10px; padding-right: 40px; }
+.register-password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  width: 36px;
+  height: 100%;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #aeb9c8;
+  cursor: pointer;
+}
+.register-valid { display: inline-flex; align-items: center; gap: 3px; color: #77e0ad; }
+.register-invalid { color: #ff9d8e; }
+.register-created-user { display: block; margin-top: 5px; }
+.register-login-button { margin-top: 0; }
+.register-options-error { grid-column: 1 / -1; }
+
+.auth-card-register .auth-links {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .auth-card-register .auth-links {
@@ -1488,6 +1590,20 @@ html, body {
   }
 
   .auth-card-register {
+    width: min(620px, calc(100vw - 28px));
     padding-bottom: 25px;
+    padding-inline: 20px;
+  }
+
+  .register-fields-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .register-field-wide { grid-column: auto; }
+
+  .register-field input,
+  .register-field select {
+    height: 40px;
   }
 }

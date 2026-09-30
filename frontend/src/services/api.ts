@@ -26,8 +26,19 @@ api.interceptors.request.use(
 
 export interface RegisterPayload {
   name: string;
+  sponsorId: string;
   email: string;
+  phone: string;
+  countryId: number;
+  stateId: number;
+  districtId: number;
   password: string;
+  transactionPassword: string;
+}
+
+export interface RegistrationOption {
+  id: number;
+  name: string;
 }
 
 export interface LoginPayload {
@@ -109,6 +120,27 @@ export interface DailyIncomeDetail {
   releaseDate: string;
 }
 
+export interface TeamPurchasePackage {
+  packageId: number;
+  packagePrice: number | string;
+}
+
+export interface TeamPurchaseHistoryRow {
+  dateTime: string;
+  packageId: number;
+  packagePrice: number | string;
+  userId: string;
+  name: string;
+  purchaserId: string;
+  purchaserName: string;
+}
+
+export interface TeamPurchaseData {
+  wallet: number;
+  package: TeamPurchasePackage;
+  history: TeamPurchaseHistoryRow[];
+}
+
 export interface DashboardResponse {
   user?: AuthUser;
   directReferrals?: DirectReferral[];
@@ -123,12 +155,39 @@ export interface LoginResponse {
 
 export interface RegisterResponse {
   message: string;
+  userId?: string;
   error?: string;
 }
 
+export const fetchRegistrationOptions = async (): Promise<{
+  countries: RegistrationOption[];
+  states: RegistrationOption[];
+  districts: RegistrationOption[];
+}> => {
+  try {
+    const response = await api.get('/auth/registration-options');
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Could not load registration options');
+  }
+};
+
+export const lookupSponsor = async (userId: string): Promise<{ userId: string; name: string }> => {
+  try {
+    const response = await api.get<{ sponsor: { userId: string; name: string } }>('/auth/sponsor', {
+      params: { userId }
+    });
+    return response.data.sponsor;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Could not verify sponsor');
+  }
+};
+
 export const registerUser = async (payload: RegisterPayload): Promise<RegisterResponse> => {
   try {
-    const response = await api.post<RegisterResponse>('/auth/register', payload);
+    const response = await api.post<RegisterResponse>('/auth/register', payload, { timeout: 30000 });
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
@@ -207,6 +266,43 @@ export const fetchDailyIncomeDetails = async (summaryId: number): Promise<DailyI
       throw new Error(error.response.data.error);
     }
     throw new Error(error.message || 'Failed to load income details');
+  }
+};
+
+export const fetchTeamPurchaseData = async (): Promise<TeamPurchaseData> => {
+  try {
+    const response = await api.get<TeamPurchaseData>('/team-purchase', { timeout: 30000 });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Failed to load package purchase data');
+  }
+};
+
+export const lookupTeamPurchaseMember = async (userId: string): Promise<{ userId: string; name: string }> => {
+  try {
+    const response = await api.get<{ member: { userId: string; name: string } }>('/team-purchase/lookup', {
+      params: { userId },
+      timeout: 15000
+    });
+    return response.data.member;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Failed to verify member');
+  }
+};
+
+export const purchaseTeamPackage = async (userId: string): Promise<{ message: string; wallet: number }> => {
+  try {
+    const response = await api.post<{ message: string; wallet: number }>(
+      '/team-purchase',
+      { userId },
+      { timeout: 60000 }
+    );
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data?.error) throw new Error(error.response.data.error);
+    throw new Error(error.message || 'Package purchase failed');
   }
 };
 

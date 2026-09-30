@@ -8,6 +8,7 @@ import { Sidebar } from './includes/Sidebar';
 import DirectReferalTeam from './directReferalTeam';
 import LevelTeam from './levelTeam';
 import TeamDailyIncome from './teamDailyIncome';
+import TeamPackagePurchase from './packagePurchase';
 import type { ActiveViewType } from './includes/Sidebar';
 import { fetchDashboardData, fetchTeamLevelCounts, fetchTeamLevelMembers } from '../../services/api';
 import type { AuthUser, DirectReferral, TeamLevelCount, TeamTreeMember } from '../../services/api';
@@ -113,7 +114,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
   const userIdStr = String(dashboardUser.userId || dashboardUser.id || 'RWFXXXXXXX');
   const userNameStr = dashboardUser.name || 'Rexler Welfare User';
   const isUserActive = Number(dashboardUser.topupFlag ?? 0) === 1;
-  const referralUrl = `https://rexlerwelfarefoundation.online/authUserRegister?affiliateCode=${userIdStr}`;
+  const referralUrl = `${window.location.origin}/?affiliateCode=${userIdStr}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralUrl);
@@ -653,8 +654,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
 
           {activeView === 'team_daily_income' && <TeamDailyIncome />}
 
+          {activeView === 'team_purchase' && <TeamPackagePurchase />}
+
           {/* 7. GENERIC SECTION PLACEHOLDER VIEWS */}
-          {['team_purchase', 'global_purchase', 'sahayata', 'fund', 'team_network', 'financial', 'withdrawal', 'support'].includes(activeView) && (
+          {['global_purchase', 'sahayata', 'fund', 'team_network', 'financial', 'withdrawal', 'support'].includes(activeView) && (
             <div style={{ background: '#ffffff', borderRadius: '12px', padding: '2.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', maxWidth: '800px', textAlign: 'center' }}>
               <div style={{ width: '60px', height: '60px', background: '#e6fffa', color: '#00b894', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto' }}>
                 <ArrowUpRight size={30} />
