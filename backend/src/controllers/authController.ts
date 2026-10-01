@@ -238,7 +238,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         // Find User by user_id
         const [users]: any = await pool.query(
-            'SELECT * FROM meddolic_user_details WHERE user_id = ?',
+            'SELECT * FROM meddolic_user_details WHERE user_id = ? AND user_type = 2',
             [userId.trim()]
         );
 
@@ -284,5 +284,57 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ 
             error: error.message || 'Internal Server Error' 
         });
+    }
+};
+
+export const adminLogin = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { userId, password } = req.body;
+        if (!userId || !password) {
+            res.status(400).json({ error: 'Please provide admin ID and password.' });
+            return;
+        }
+
+        const [users]: any = await pool.query(
+            'SELECT member_id, user_id, name, email_id, password, user_type FROM meddolic_user_details WHERE user_id = ? AND user_type = 1 AND account_status = 1 LIMIT 1',
+            [String(userId).trim()]
+        );
+        if (users.length === 0) {
+            res.status(400).json({ error: 'Invalid admin ID or password.' });
+            return;
+        }
+
+        const admin = users[0];
+        const storedPassword = String(admin.password ?? '');
+        const isHashedPassword = /^\$2[aby]\$/.test(storedPassword);
+        const passwordMatches = isHashedPassword
+            ? await bcrypt.compare(String(password), storedPassword)
+            : String(password).trim() === storedPassword.trim();
+        if (!passwordMatches) {
+            res.status(400).json({ error: 'Invalid admin ID or password.' });
+            return;
+        }
+
+        const secretKey = process.env.JWT_SECRET || JWT_SECRET;
+        const token = jwt.sign(
+            { id: admin.member_id, userId: admin.user_id, email: admin.email_id, role: 'admin', userType: 1 },
+            secretKey,
+            { expiresIn: '1h' }
+        );
+
+        res.status(200).json({
+            message: 'Admin login successful.',
+            token,
+            user: {
+                id: admin.member_id,
+                userId: admin.user_id,
+                name: admin.name,
+                email: admin.email_id,
+                role: 'admin'
+            }
+        });
+    } catch (error: any) {
+        console.error('Admin Login Error:', error.message);
+        res.status(500).json({ error: 'Admin login failed. Please try again.' });
     }
 };

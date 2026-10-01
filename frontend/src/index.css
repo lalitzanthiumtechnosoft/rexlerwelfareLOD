@@ -1140,7 +1140,8 @@ html, body {
   .dash-header,
   .daily-income-toolbar,
   .daily-income-pagination,
-  .team-level-back-btn {
+  .team-level-back-btn,
+  .id-card-download-btn {
     display: none !important;
   }
 
@@ -1150,6 +1151,278 @@ html, body {
     height: auto !important;
     overflow: visible !important;
     box-shadow: none !important;
+  }
+
+  .id-card-page {
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .id-card-pair {
+    width: max-content !important;
+    gap: 20px !important;
+    box-shadow: none !important;
+  }
+
+  .id-card-front,
+  .id-card-back {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    break-inside: avoid;
+  }
+}
+
+.id-card-page {
+  display: flex;
+  min-height: 430px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 18px 12px 26px;
+  background: linear-gradient(135deg, #434fb9, #74684d);
+  color: #142033;
+  font-family: 'Segoe UI', var(--font-body), sans-serif;
+}
+
+.id-card-pair {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.id-card-front,
+.id-card-back {
+  position: relative;
+  width: 53.98mm;
+  height: 85.6mm;
+  flex: 0 0 53.98mm;
+  overflow: hidden;
+  border-radius: 6mm;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.id-card-front-header {
+  position: relative;
+  display: flex;
+  height: 43%;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #720000, #480000);
+  padding: 6px 10px 20px;
+}
+
+.id-card-motto {
+  color: #f2ad00;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.id-card-logo {
+  width: 88px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.id-card-avatar {
+  position: absolute;
+  bottom: -34px;
+  left: 50%;
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  transform: translateX(-50%);
+  border: 3px solid #990000;
+  background: #dce9f7;
+  color: #185887;
+}
+
+.id-card-front-body {
+  height: 57%;
+  padding: 37px 10px 8px;
+  text-align: center;
+}
+
+.id-card-front-body h3 {
+  overflow: hidden;
+  margin: 0 0 3px;
+  color: #111827;
+  font-family: 'Segoe UI', var(--font-body), sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.id-card-details {
+  width: 100%;
+}
+
+.id-card-details > div {
+  display: flex;
+  min-height: 17px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: #202020;
+  font-size: 8px;
+}
+
+.id-card-details span {
+  flex: 0 0 auto;
+  opacity: 0.72;
+}
+
+.id-card-details strong {
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 600;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.id-card-signature {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 9px;
+}
+
+.id-card-signature span {
+  width: 70px;
+  border-top: 1px solid #111;
+  color: #111;
+  font-size: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.id-card-back {
+  padding: 5mm;
+}
+
+.id-card-back-content {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  color: #333;
+  font-family: 'Segoe UI', var(--font-body), sans-serif;
+}
+
+.id-card-back-content header {
+  margin-bottom: 11px;
+  text-align: center;
+}
+
+.id-card-back-content h3 {
+  margin: 0;
+  color: #720000;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  line-height: 1.4;
+}
+
+.id-card-back-content header p {
+  margin: 3px 0 0;
+  font-size: 9px;
+}
+
+.id-card-back-content ul {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.id-card-back-content li {
+  margin-bottom: 5px;
+}
+
+.id-card-back-content label {
+  margin-top: auto;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.id-card-back-content input {
+  width: 100%;
+  height: 24px;
+  margin-top: 4px;
+  padding: 0 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  color: #111827;
+  font-family: inherit;
+  font-size: 9px;
+}
+
+.id-card-authority {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.id-card-authority img {
+  width: 38px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.id-card-authority span {
+  width: 100%;
+  border-top: 1px solid #111;
+  padding-top: 2px;
+  color: #111;
+  font-size: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.id-card-download-btn {
+  display: inline-flex;
+  min-width: 182px;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #a50000, #4a0000);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Segoe UI', var(--font-body), sans-serif;
+  font-size: 15px;
+}
+
+.id-card-download-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 520px) {
+  .id-card-page {
+    min-height: 0;
+    padding: 20px 10px;
+  }
+
+  .id-card-pair {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
   }
 }
 

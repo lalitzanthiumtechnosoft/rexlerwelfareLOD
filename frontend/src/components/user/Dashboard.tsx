@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   User, CreditCard, Gift, Activity, Zap, Copy, 
   Moon, Sun, Maximize, Minimize, Home, CheckCircle2,
-  Share2, Lock, Building, Save, KeyRound, Menu, ArrowUpRight, ChevronDown, LogOut
+  Share2, Lock, Building, Save, KeyRound, Menu, ArrowUpRight, ChevronDown, LogOut, Download
 } from 'lucide-react';
 import { Sidebar } from './includes/Sidebar';
 import DirectReferalTeam from './directReferalTeam';
@@ -10,9 +10,13 @@ import LevelTeam from './levelTeam';
 import TeamDailyIncome from './teamDailyIncome';
 import TeamPackagePurchase from './packagePurchase';
 import AutopoolPurchase from './autopoolPurchase';
+import FundRequest from './funtRequest';
+import IncomeToPurchase from './IncomeToPurchase';
+import Withdrawal from './walletWithdraw';
+import Support from './support';
 import type { ActiveViewType } from './includes/Sidebar';
-import { fetchDashboardData, fetchTeamLevelCounts, fetchTeamLevelMembers } from '../../services/api';
-import type { AuthUser, DirectReferral, TeamLevelCount, TeamTreeMember } from '../../services/api';
+import { changeLoginPassword, changeTransactionPassword, fetchBankDetails, fetchDashboardData, fetchTeamLevelCounts, fetchTeamLevelMembers, updateBankDetails, updateProfile } from '../../services/api';
+import type { AuthUser, BankDetails, DirectReferral, TeamLevelCount, TeamTreeMember } from '../../services/api';
 import faviconImg from '../../assets/favicon.png';
 import logoImg from '../../assets/logo.png';
 
@@ -47,6 +51,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
 
   // Form notifications
   const [profileSavedMsg, setProfileSavedMsg] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState(initialUser.name || '');
+  const [profileEmail, setProfileEmail] = useState(initialUser.email || '');
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
+  const [isPasswordChanging, setIsPasswordChanging] = useState(false);
+  const [transactionPasswordError, setTransactionPasswordError] = useState<string | null>(null);
+  const [isTransactionPasswordSaving, setIsTransactionPasswordSaving] = useState(false);
+  const [bankDetails, setBankDetails] = useState<BankDetails>({
+    accountHolderName: '',
+    ifscCode: '',
+    bankName: '',
+    branch: '',
+    accountNumber: '',
+    panNumber: ''
+  });
+  const [bankDetailsError, setBankDetailsError] = useState<string | null>(null);
+  const [isBankDetailsLoading, setIsBankDetailsLoading] = useState(false);
+  const [isBankDetailsSaving, setIsBankDetailsSaving] = useState(false);
+  const [idCardAddress, setIdCardAddress] = useState('');
+  const [isIdCardDownloading, setIsIdCardDownloading] = useState(false);
 
   const loadData = async () => {
     try {
@@ -81,6 +106,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
       clearInterval(intervalId);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeView !== 'bank_details') return;
+
+    let cancelled = false;
+    setIsBankDetailsLoading(true);
+    setBankDetailsError(null);
+    fetchBankDetails()
+      .then((details) => {
+        if (!cancelled) setBankDetails(details);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setBankDetailsError(error instanceof Error ? error.message : 'Failed to load bank details.');
+      })
+      .finally(() => {
+        if (!cancelled) setIsBankDetailsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeView]);
 
   useEffect(() => {
     if (activeView !== 'team_tree_downline') return;
@@ -160,6 +207,106 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
     setTimeout(() => setProfileSavedMsg(null), 3000);
   };
 
+  const handleProfileSave = async () => {
+    setProfileSaveError(null);
+    setIsProfileSaving(true);
+    try {
+      const updatedUser = await updateProfile({
+        name: profileName.trim(),
+        email: profileEmail.trim()
+      });
+      setDashboardUser((prev) => ({ ...prev, ...updatedUser }));
+      handleSimulateSave('Profile information updated successfully!');
+    } catch (error: unknown) {
+      setProfileSaveError(error instanceof Error ? error.message : 'Failed to update profile.');
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
+
+  const handleLoginPasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPasswordChangeError(null);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const currentPassword = String(formData.get('currentPassword') || '');
+    const newPassword = String(formData.get('newPassword') || '');
+    const confirmPassword = String(formData.get('confirmPassword') || '');
+
+    if (newPassword !== confirmPassword) {
+      setPasswordChangeError('New password and confirmation do not match.');
+      return;
+    }
+
+    setIsPasswordChanging(true);
+    try {
+      await changeLoginPassword({ currentPassword, newPassword });
+      form.reset();
+      handleSimulateSave('Login password changed successfully!');
+    } catch (error: unknown) {
+      setPasswordChangeError(error instanceof Error ? error.message : 'Failed to update login password.');
+    } finally {
+      setIsPasswordChanging(false);
+    }
+  };
+
+  const handleTransactionPasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTransactionPasswordError(null);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    setIsTransactionPasswordSaving(true);
+    try {
+      await changeTransactionPassword({
+        currentPassword: String(formData.get('currentTransactionPassword') || ''),
+        newPassword: String(formData.get('newTransactionPassword') || '')
+      });
+      form.reset();
+      handleSimulateSave('Transaction password updated successfully!');
+    } catch (error: unknown) {
+      setTransactionPasswordError(error instanceof Error ? error.message : 'Failed to update transaction password.');
+    } finally {
+      setIsTransactionPasswordSaving(false);
+    }
+  };
+
+  const handleBankDetailsSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBankDetailsError(null);
+    setIsBankDetailsSaving(true);
+    try {
+      const savedDetails = await updateBankDetails(bankDetails);
+      setBankDetails(savedDetails);
+      handleSimulateSave('Bank details saved successfully!');
+    } catch (error: unknown) {
+      setBankDetailsError(error instanceof Error ? error.message : 'Failed to save bank details.');
+    } finally {
+      setIsBankDetailsSaving(false);
+    }
+  };
+
+  const handleIdCardDownload = async () => {
+    const card = document.getElementById('member-id-card');
+    if (!card) return;
+
+    setIsIdCardDownloading(true);
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(card, {
+        scale: 3,
+        backgroundColor: '#ffffff',
+        useCORS: true
+      });
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `rexler-id-card-${userIdStr}.png`;
+      downloadLink.href = canvas.toDataURL('image/png');
+      downloadLink.click();
+    } finally {
+      setIsIdCardDownloading(false);
+    }
+  };
+
   const handleSelectView = (view: ActiveViewType) => {
     if (view === 'team_tree_downline') {
       setSelectedTeamLevel(null);
@@ -208,14 +355,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
               {activeView === 'team_purchase' && 'Team Purchase Package'}
               {activeView === 'global_purchase' && 'Helping Fund Purchase Package'}
               {activeView === 'sahayata' && 'Sahayata Rashi'}
-              {activeView === 'fund' && 'Fund Management'}
+              {activeView === 'fund' && 'Income Wallet To Purchase Wallet'}
+              {activeView === 'fund_request' && 'Fund Request'}
               {activeView === 'team_network' && 'Team & Network'}
               {activeView === 'direct_referrals' && 'Direct Referrals'}
               {activeView === 'team_tree_downline' && (selectedTeamLevel === null ? 'Level Team' : `Level ${selectedTeamLevel} Team`)}
               {activeView === 'financial' && 'Financial Report'}
               {activeView === 'team_daily_income' && 'Daily Field Expenses Income'}
-              {activeView === 'withdrawal' && 'Withdrawal Statement'}
-              {activeView === 'support' && 'Helpdesk Support'}
+              {activeView === 'withdrawal' && 'Withdrawal'}
+              {activeView === 'support' && 'Support'}
             </h2>
           </div>
 
@@ -466,11 +614,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>FULL NAME</label>
-                  <input type="text" className="rexler-input" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} defaultValue={userNameStr} />
+                  <input type="text" className="rexler-input" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} value={profileName} onChange={(event) => setProfileName(event.target.value)} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>EMAIL ADDRESS</label>
-                  <input type="email" className="rexler-input" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} defaultValue={dashboardUser.email || 'user@rexler.online'} />
+                  <input type="email" className="rexler-input" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} value={profileEmail} onChange={(event) => setProfileEmail(event.target.value)} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>ACCOUNT STATUS</label>
@@ -480,12 +628,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                 </div>
               </div>
 
+              {profileSaveError && <div className="alert-box error" role="alert" style={{ marginTop: '1rem' }}>{profileSaveError}</div>}
               <button 
                 type="button" 
-                onClick={() => handleSimulateSave('Profile information updated successfully!')}
+                onClick={() => void handleProfileSave()}
+                disabled={isProfileSaving}
                 style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >
-                <Save size={16} /> Save Changes
+                <Save size={16} /> {isProfileSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -501,24 +651,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                 </div>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSimulateSave('Login password changed successfully!'); }}>
+              <form onSubmit={(event) => void handleLoginPasswordChange(event)}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>OLD PASSWORD</label>
-                    <input type="password" className="rexler-input" placeholder="Enter old password" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="password" name="currentPassword" autoComplete="current-password" className="rexler-input" placeholder="Enter old password" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>NEW PASSWORD</label>
-                    <input type="password" className="rexler-input" placeholder="Enter new password" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="password" name="newPassword" autoComplete="new-password" minLength={3} maxLength={6} className="rexler-input" placeholder="Enter new password (3-6 characters)" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>CONFIRM NEW PASSWORD</label>
-                    <input type="password" className="rexler-input" placeholder="Confirm new password" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="password" name="confirmPassword" autoComplete="new-password" minLength={3} maxLength={6} className="rexler-input" placeholder="Confirm new password" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
                   </div>
                 </div>
 
-                <button type="submit" style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Save size={16} /> Update Password
+                {passwordChangeError && <div className="alert-box error" role="alert" style={{ marginTop: '1rem' }}>{passwordChangeError}</div>}
+                <button type="submit" disabled={isPasswordChanging} style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Save size={16} /> {isPasswordChanging ? 'Updating...' : 'Update Password'}
                 </button>
               </form>
             </div>
@@ -535,20 +686,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                 </div>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSimulateSave('Transaction password updated successfully!'); }}>
+              <form onSubmit={(event) => void handleTransactionPasswordChange(event)}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>CURRENT TRANSACTION PIN</label>
-                    <input type="password" className="rexler-input" placeholder="Enter current PIN" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>CURRENT TRANSACTION PASSWORD</label>
+                    <input type="password" name="currentTransactionPassword" autoComplete="off" className="rexler-input" placeholder="Enter current transaction password" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>NEW TRANSACTION PIN</label>
-                    <input type="password" className="rexler-input" placeholder="Enter new PIN" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>NEW TRANSACTION PASSWORD</label>
+                    <input type="password" name="newTransactionPassword" autoComplete="new-password" minLength={3} maxLength={6} className="rexler-input" placeholder="Enter new password (3-6 characters)" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
                   </div>
                 </div>
 
-                <button type="submit" style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Save size={16} /> Save Transaction PIN
+                {transactionPasswordError && <div className="alert-box error" role="alert" style={{ marginTop: '1rem' }}>{transactionPasswordError}</div>}
+                <button type="submit" disabled={isTransactionPasswordSaving} style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Save size={16} /> {isTransactionPasswordSaving ? 'Saving...' : 'Save Transaction Password'}
                 </button>
               </form>
             </div>
@@ -565,28 +717,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
                 </div>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSimulateSave('Bank details saved successfully!'); }}>
+              <form onSubmit={(event) => void handleBankDetailsSave(event)}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>BANK NAME</label>
-                    <input type="text" className="rexler-input" placeholder="State Bank of India" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="text" className="rexler-input" value={bankDetails.bankName} onChange={(event) => setBankDetails((prev) => ({ ...prev, bankName: event.target.value }))} placeholder="State Bank of India" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required disabled={isBankDetailsLoading} />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>ACCOUNT HOLDER NAME</label>
-                    <input type="text" className="rexler-input" defaultValue={userNameStr} style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="text" className="rexler-input" value={bankDetails.accountHolderName} onChange={(event) => setBankDetails((prev) => ({ ...prev, accountHolderName: event.target.value }))} placeholder="Enter account holder name" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required disabled={isBankDetailsLoading} />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>ACCOUNT NUMBER</label>
-                    <input type="text" className="rexler-input" placeholder="Enter account number" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="text" className="rexler-input" value={bankDetails.accountNumber} onChange={(event) => setBankDetails((prev) => ({ ...prev, accountNumber: event.target.value }))} placeholder="Enter account number" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required disabled={isBankDetailsLoading} />
                   </div>
                   <div>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>IFSC CODE</label>
-                    <input type="text" className="rexler-input" placeholder="SBIN0001234" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required />
+                    <input type="text" className="rexler-input" value={bankDetails.ifscCode} onChange={(event) => setBankDetails((prev) => ({ ...prev, ifscCode: event.target.value.toUpperCase() }))} placeholder="Example: SBIN0001234" maxLength={11} style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required disabled={isBankDetailsLoading} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>BRANCH</label>
+                    <input type="text" className="rexler-input" value={bankDetails.branch} onChange={(event) => setBankDetails((prev) => ({ ...prev, branch: event.target.value }))} placeholder="Enter branch" style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required disabled={isBankDetailsLoading} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>PAN NUMBER</label>
+                    <input type="text" className="rexler-input" value={bankDetails.panNumber} onChange={(event) => setBankDetails((prev) => ({ ...prev, panNumber: event.target.value.toUpperCase() }))} placeholder="Example: ABCDE1234F" maxLength={10} style={{ background: '#ffffff', color: '#1e293b', border: '1px solid #cbd5e1', width: '100%', marginTop: '4px' }} required disabled={isBankDetailsLoading} />
                   </div>
                 </div>
 
-                <button type="submit" style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Save size={16} /> Save Bank Account
+                {bankDetailsError && <div className="alert-box error" role="alert" style={{ marginTop: '1rem' }}>{bankDetailsError}</div>}
+                <button type="submit" disabled={isBankDetailsLoading || isBankDetailsSaving} style={{ marginTop: '1.5rem', background: '#00b894', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Save size={16} /> {isBankDetailsLoading ? 'Loading...' : isBankDetailsSaving ? 'Saving...' : 'Save Bank Account'}
                 </button>
               </form>
             </div>
@@ -594,39 +755,56 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
 
           {/* 6. ID CARD VIEW */}
           {activeView === 'id_card' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ 
-                width: '360px', 
-                background: 'linear-gradient(135deg, #151824, #232738)', 
-                borderRadius: '16px', 
-                padding: '2rem', 
-                border: '2px solid #00b894', 
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                color: '#ffffff',
-                textAlign: 'center',
-                position: 'relative'
-              }}>
-                <div style={{ position: 'absolute', top: '12px', right: '16px', background: '#00b894', color: '#fff', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
-                  OFFICIAL MEMBER
-                </div>
-                
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <img src={logoImg} alt="Rexler Logo" style={{ height: '52px', width: 'auto', objectFit: 'contain' }} />
-                </div>
+            <div className="id-card-page">
+              <div className="id-card-pair" id="member-id-card">
+                <article className="id-card-front">
+                  <div className="id-card-front-header">
+                    <div className="id-card-motto">सेवा परम धर्म !!!</div>
+                    <img className="id-card-logo" src={logoImg} alt="Rexler Welfare Foundation" />
+                    <div className="id-card-avatar"><User size={34} strokeWidth={1.6} /></div>
+                  </div>
+                  <div className="id-card-front-body">
+                    <h3>{userNameStr}</h3>
+                    <div className="id-card-details">
+                      <div><span>User ID</span><strong>{userIdStr}</strong></div>
+                      <div><span>Email</span><strong>{dashboardUser.email || '--'}</strong></div>
+                      <div><span>Join Date</span><strong>{dashboardUser.created_at ? new Date(dashboardUser.created_at).toLocaleString() : '--'}</strong></div>
+                      <div><span>Phone</span><strong>{dashboardUser.phone || '--'}</strong></div>
+                      <div><span>Registration No.</span><strong>{dashboardUser.memberId || dashboardUser.id || '--'}</strong></div>
+                    </div>
+                    <div className="id-card-signature"><span>Signatory</span></div>
+                  </div>
+                </article>
 
-                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', margin: '0 auto 1rem auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 800 }}>
-                  {userNameStr.charAt(0)}
-                </div>
-
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{userNameStr}</h3>
-                <p style={{ color: '#00b894', fontWeight: 700, fontSize: '0.9rem', margin: '4px 0 1rem 0' }}>{userIdStr}</p>
-
-                <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '8px', padding: '0.75rem', textAlign: 'left', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <div><strong>Status:</strong> ACTIVE MEMBER</div>
-                  <div><strong>Portal:</strong> Rexler Welfare Foundation</div>
-                  <div><strong>Issued Date:</strong> {new Date().toLocaleDateString()}</div>
-                </div>
+                <article className="id-card-back">
+                  <div className="id-card-back-content">
+                    <header>
+                      <h3>Rexler Welfare Foundation</h3>
+                      <p>Member Guidelines</p>
+                    </header>
+                    <ul>
+                      <li>Member must carry this card at all times.</li>
+                      <li>This card is non-transferable and strictly personal.</li>
+                      <li>In case of loss, report immediately to the office.</li>
+                    </ul>
+                    <label htmlFor="id-card-address">Address:</label>
+                    <input
+                      id="id-card-address"
+                      type="text"
+                      value={idCardAddress}
+                      onChange={(event) => setIdCardAddress(event.target.value)}
+                      placeholder="Enter Address"
+                    />
+                    <div className="id-card-authority">
+                      <img src={logoImg} alt="" />
+                      <span>Authorized Signatory</span>
+                    </div>
+                  </div>
+                </article>
               </div>
+              <button type="button" className="id-card-download-btn" disabled={isIdCardDownloading} onClick={() => void handleIdCardDownload()}>
+                <Download size={17} /> {isIdCardDownloading ? 'Preparing...' : 'Download ID Card'}
+              </button>
             </div>
           )}
 
@@ -657,9 +835,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user: initialUser, onLogou
 
           {activeView === 'team_purchase' && <TeamPackagePurchase />}
           {activeView === 'global_purchase' && <AutopoolPurchase />}
+          {activeView === 'fund_request' && <FundRequest />}
+          {activeView === 'fund' && <IncomeToPurchase />}
+          {activeView === 'withdrawal' && <Withdrawal />}
+          {activeView === 'support' && <Support />}
 
           {/* 7. GENERIC SECTION PLACEHOLDER VIEWS */}
-          {['sahayata', 'fund', 'team_network', 'financial', 'withdrawal', 'support'].includes(activeView) && (
+          {['sahayata', 'team_network', 'financial'].includes(activeView) && (
             <div style={{ background: '#ffffff', borderRadius: '12px', padding: '2.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', maxWidth: '800px', textAlign: 'center' }}>
               <div style={{ width: '60px', height: '60px', background: '#e6fffa', color: '#00b894', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem auto' }}>
                 <ArrowUpRight size={30} />

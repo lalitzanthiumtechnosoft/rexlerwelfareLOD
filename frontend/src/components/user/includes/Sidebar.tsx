@@ -8,7 +8,7 @@ import faviconImg from '../../../assets/favicon.png';
 export type ActiveViewType = 
   | 'dashboard'
   | 'my_profile' | 'change_password' | 'transaction_password' | 'bank_details' | 'id_card'
-  | 'team_purchase' | 'global_purchase' | 'sahayata' | 'fund' | 'team_network' | 'direct_referrals' | 'team_tree_downline' | 'financial' | 'team_daily_income' | 'withdrawal' | 'support';
+  | 'team_purchase' | 'global_purchase' | 'sahayata' | 'fund' | 'fund_request' | 'team_network' | 'direct_referrals' | 'team_tree_downline' | 'financial' | 'team_daily_income' | 'withdrawal' | 'support';
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -31,7 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   // Accordion expansion states
   const [openAccordions, setOpenAccordions] = useState<{ [key: string]: boolean }>({
-    profile: true,
+    profile: false,
     team_purchase: false,
     global_purchase: false,
     sahayata: false,
@@ -43,10 +43,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   });
 
   const toggleAccordion = (key: string) => {
-    setOpenAccordions((prev) => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    setOpenAccordions((prev) => {
+      const shouldOpen = !prev[key];
+      return Object.fromEntries(
+        Object.keys(prev).map((accordionKey) => [accordionKey, accordionKey === key && shouldOpen])
+      );
+    });
+  };
+
+  const closeAccordions = () => {
+    setOpenAccordions((prev) => Object.fromEntries(Object.keys(prev).map((key) => [key, false])));
   };
 
   return (
@@ -80,7 +86,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* 1. DASHBOARD */}
           <button 
             className={`sidebar-item ${activeView === 'dashboard' ? 'active' : ''}`}
-            onClick={() => onSelectView('dashboard')}
+            onClick={() => {
+              closeAccordions();
+              onSelectView('dashboard');
+            }}
           >
             <Home size={18} />
             <span>Dashboard</span>
@@ -88,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* 2. PROFILE */}
           <button 
-            className={`sidebar-item ${openAccordions['profile'] && activeView !== 'dashboard' ? 'parent-open' : ''}`}
+            className={`sidebar-item ${['my_profile', 'change_password', 'transaction_password', 'bank_details', 'id_card'].includes(activeView) ? 'active' : ''}`}
             onClick={() => toggleAccordion('profile')}
           >
             <CreditCard size={18} />
@@ -117,25 +126,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
 
           {/* 3. TEAM PURCHASE PACKAGE */}
-          <button className={`sidebar-item ${activeView === 'team_purchase' ? 'active' : ''}`} onClick={() => onSelectView('team_purchase')}>
+          <button className={`sidebar-item ${activeView === 'team_purchase' ? 'active' : ''}`} onClick={() => {
+            closeAccordions();
+            onSelectView('team_purchase');
+          }}>
             <Package size={18} />
             <span>Team Purchase Package</span>
           </button>
 
           {/* 4. GLOBAL PURCHASE PACKAGE */}
-          <button className={`sidebar-item ${activeView === 'global_purchase' ? 'active' : ''}`} onClick={() => onSelectView('global_purchase')}>
+          <button className={`sidebar-item ${activeView === 'global_purchase' ? 'active' : ''}`} onClick={() => {
+            closeAccordions();
+            onSelectView('global_purchase');
+          }}>
             <Globe size={18} />
             <span>Helping Fund Purchase Package</span>
           </button>
 
           {/* 5. SAHAYATA RASHI */}
-          <button className={`sidebar-item ${activeView === 'sahayata' ? 'active' : ''}`} onClick={() => onSelectView('sahayata')}>
+          <button className={`sidebar-item ${activeView === 'sahayata' ? 'active' : ''}`} onClick={() => {
+            closeAccordions();
+            onSelectView('sahayata');
+          }}>
             <HeartHandshake size={18} />
             <span>Sahayata Rashi</span>
           </button>
 
           {/* 6. FUND MANAGEMENT */}
-          <button className={`sidebar-item ${activeView === 'fund' ? 'active' : ''}`} onClick={() => toggleAccordion('fund')}>
+          <button className={`sidebar-item ${['fund', 'fund_request'].includes(activeView) ? 'active' : ''}`} onClick={() => toggleAccordion('fund')}>
             <Wallet size={18} />
             <span>Fund Management</span>
             {openAccordions['fund'] ? <ChevronDown size={16} className="sidebar-chevron" /> : <ChevronRight size={16} className="sidebar-chevron" />}
@@ -143,11 +161,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {openAccordions['fund'] && (
             <div className="sidebar-submenu">
-              <button className="sidebar-subitem" onClick={() => onSelectView('fund')}>
-                <span className="sub-dash-prefix">-</span><span>Fund Transfer</span>
+              <button className={`sidebar-subitem ${activeView === 'fund_request' ? 'active' : ''}`} onClick={() => onSelectView('fund_request')}>
+                <span className="sub-dash-prefix">-</span><span>Fund Request</span>
               </button>
               <button className="sidebar-subitem" onClick={() => onSelectView('fund')}>
-                <span className="sub-dash-prefix">-</span><span>Fund Request</span>
+                <span className="sub-dash-prefix">-</span><span>IncomeToPurchase Wallet</span>
               </button>
             </div>
           )}
@@ -179,9 +197,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {openAccordions['financial'] && (
             <div className="sidebar-submenu">
-              <button className="sidebar-subitem" onClick={() => onSelectView('financial')}>
+              {/* <button className="sidebar-subitem" onClick={() => onSelectView('financial')}>
                 <span className="sub-dash-prefix">-</span><span>Income Statement</span>
-              </button>
+              </button> */}
               <button className={`sidebar-subitem ${activeView === 'team_daily_income' ? 'active' : ''}`} onClick={() => onSelectView('team_daily_income')}>
                 <span className="sub-dash-prefix">-</span><span>Daily Field Expenses Income</span>
               </button>
@@ -197,17 +215,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {openAccordions['withdrawal'] && (
             <div className="sidebar-submenu">
-              <button className="sidebar-subitem" onClick={() => onSelectView('withdrawal')}>
+              <button className={`sidebar-subitem ${activeView === 'withdrawal' ? 'active' : ''}`} onClick={() => onSelectView('withdrawal')}>
                 <span className="sub-dash-prefix">-</span><span>Wallet Withdrawal</span>
-              </button>
-              <button className="sidebar-subitem" onClick={() => onSelectView('withdrawal')}>
-                <span className="sub-dash-prefix">-</span><span>Withdrawal History</span>
               </button>
             </div>
           )}
 
           {/* 10. SUPPORT */}
-          <button className={`sidebar-item ${activeView === 'support' ? 'active' : ''}`} onClick={() => onSelectView('support')}>
+          <button className={`sidebar-item ${activeView === 'support' ? 'active' : ''}`} onClick={() => {
+            closeAccordions();
+            onSelectView('support');
+          }}>
             <Share2 size={18} />
             <span>Support</span>
           </button>

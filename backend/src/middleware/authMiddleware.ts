@@ -26,3 +26,13 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
         res.status(403).json({ error: 'Invalid or expired token.' });
     }
 };
+
+export const verifyAdminToken = (req: AuthRequest, res: Response, next: NextFunction): void => {
+    verifyToken(req, res, () => {
+        if (req.user?.role !== 'admin' || Number(req.user?.userType) !== 1) {
+            res.status(403).json({ error: 'Administrator access required.' });
+            return;
+        }
+        next();
+    });
+};

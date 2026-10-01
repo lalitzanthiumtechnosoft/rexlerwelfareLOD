@@ -1,8 +1,254 @@
 import { Router, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { verifyToken, AuthRequest } from '../middleware/authMiddleware';
 import { pool } from '../config/db';
 
 const router = Router();
+
+router.get('/bank-details', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+    const memberId = req.user?.id ?? req.user?.memberId;
+    if (memberId == null) {
+        res.status(401).json({ error: 'Invalid session token.' });
+        return;
+    }
+
+    try {
+        const [users]: any = await pool.query(
+            'SELECT acName, ifsc, bank, branch, accountNo, panNo FROM meddolic_user_details WHERE member_id = ? LIMIT 1',
+            [memberId]
+        );
+        if (users.length === 0) {
+            res.status(404).json({ error: 'User account not found.' });
+            return;
+        }
+
+        res.status(200).json({
+            bankDetails: {
+                accountHolderName: users[0].acName || '',
+                ifscCode: users[0].ifsc || '',
+                bankName: users[0].bank || '',
+                branch: users[0].branch || '',
+                accountNumber: users[0].accountNo || '',
+                panNumber: users[0].panNo || ''
+            }
+        });
+    } catch (error: any) {
+        console.error('Bank details load error:', error.message);
+        res.status(500).json({ error: 'Failed to load bank details.' });
+    }
+});
+
+router.put('/bank-details', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+    const memberId = req.user?.id ?? req.user?.memberId;
+    const accountHolderName = typeof req.body?.accountHolderName === 'string' ? req.body.accountHolderName.trim() : '';
+    const ifscCode = typeof req.body?.ifscCode === 'string' ? req.body.ifscCode.trim().toUpperCase() : '';
+    const bankName = typeof req.body?.bankName === 'string' ? req.body.bankName.trim() : '';
+    const branch = typeof req.body?.branch === 'string' ? req.body.branch.trim() : '';
+    const accountNumber = typeof req.body?.accountNumber === 'string' ? req.body.accountNumber.trim() : '';
+    const panNumber = typeof req.body?.panNumber === 'string' ? req.body.panNumber.trim().toUpperCase() : '';
+
+    if (memberId == null) {
+        res.status(401).json({ error: 'Invalid session token.' });
+        return;
+    }
+    if (!accountHolderName) {
+        res.status(400).json({ error: 'Account holder name is required.' });
+        return;
+    }
+    if (!bankName) {
+        res.status(400).json({ error: 'Bank name is required.' });
+        return;
+    }
+    if (!branch) {
+        res.status(400).json({ error: 'Branch is required.' });
+        return;
+    }
+    if (!accountNumber) {
+        res.status(400).json({ error: 'Account number is required.' });
+        return;
+    }
+    if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode)) {
+        res.status(400).json({ error: 'IFSC must be 11 characters, for example SBIN0001234.' });
+        return;
+    }
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber)) {
+        res.status(400).json({ error: 'PAN must be 10 characters, for example ABCDE1234F.' });
+        return;
+    }
+
+    try {
+        await pool.query(
+            'UPDATE meddolic_user_details SET acName = ?, ifsc = ?, bank = ?, branch = ?, accountNo = ?, panNo = ? WHERE member_id = ?',
+            [accountHolderName, ifscCode, bankName, branch, accountNumber, panNumber, memberId]
+        );
+        const [users]: any = await pool.query(
+            'SELECT acName, ifsc, bank, branch, accountNo, panNo FROM meddolic_user_details WHERE member_id = ? LIMIT 1',
+            [memberId]
+        );
+        if (users.length === 0) {
+            res.status(404).json({ error: 'User account not found.' });
+            return;
+        }
+
+        const savedDetails = {
+            accountHolderName: users[0].acName || '',
+            ifscCode: users[0].ifsc || '',
+            bankName: users[0].bank || '',
+            branch: users[0].branch || '',
+            accountNumber: users[0].accountNo || '',
+            panNumber: users[0].panNo || ''
+        };
+        if (savedDetails.accountHolderName !== accountHolderName || savedDetails.ifscCode !== ifscCode || savedDetails.bankName !== bankName || savedDetails.branch !== branch || savedDetails.accountNumber !== accountNumber || savedDetails.panNumber !== panNumber) {
+            res.status(500).json({ error: 'Bank details were not saved. Please try again.' });
+            return;
+        }
+
+        res.status(200).json({ message: 'Bank details saved successfully.', bankDetails: savedDetails });
+    } catch (error: any) {
+        console.error('Bank details update error:', error.message);
+        res.status(500).json({ error: 'Failed to save bank details.' });
+    }
+});
+
+router.put('/change-transaction-password', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+    const memberId = req.user?.id ?? req.user?.memberId;
+    const currentPassword = req.body?.currentPassword;
+    const newPassword = req.body?.newPassword;
+
+    if (memberId == null) {
+        res.status(401).json({ error: 'Invalid session token.' });
+        return;
+    }
+    if (typeof currentPassword !== 'string' || !currentPassword || typeof newPassword !== 'string' || newPassword.length < 3 || newPassword.length > 6) {
+        res.status(400).json({ error: 'Enter your current transaction password and a new password of 3 to 6 characters.' });
+        return;
+    }
+    if (currentPassword === newPassword) {
+        res.status(400).json({ error: 'New transaction password must be different from the current password.' });
+        return;
+    }
+
+    try {
+        const [users]: any = await pool.query(
+            'SELECT trnPassword FROM meddolic_user_details WHERE member_id = ? LIMIT 1',
+            [memberId]
+        );
+        if (users.length === 0) {
+            res.status(404).json({ error: 'User account not found.' });
+            return;
+        }
+
+        const storedPassword = String(users[0].trnPassword ?? '');
+        const isHashedPassword = /^\$2[aby]\$/.test(storedPassword);
+        const passwordMatches = isHashedPassword
+            ? await bcrypt.compare(currentPassword, storedPassword)
+            : currentPassword.trim() === storedPassword.trim();
+        if (!passwordMatches) {
+            res.status(400).json({ error: 'Current transaction password is incorrect.' });
+            return;
+        }
+
+        await pool.query(
+            'UPDATE meddolic_user_details SET trnPassword = ? WHERE member_id = ?',
+            [newPassword, memberId]
+        );
+        res.status(200).json({ message: 'Transaction password updated successfully.' });
+    } catch (error: any) {
+        console.error('Transaction password update error:', error.message);
+        res.status(500).json({ error: 'Failed to update transaction password.' });
+    }
+});
+
+router.put('/change-password', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+    const memberId = req.user?.id ?? req.user?.memberId;
+    const currentPassword = req.body?.currentPassword;
+    const newPassword = req.body?.newPassword;
+
+    if (memberId == null) {
+        res.status(401).json({ error: 'Invalid session token.' });
+        return;
+    }
+    if (typeof currentPassword !== 'string' || !currentPassword || typeof newPassword !== 'string' || newPassword.length < 3 || newPassword.length > 6) {
+        res.status(400).json({ error: 'Enter your current password and a new password of 3 to 6 characters.' });
+        return;
+    }
+    if (currentPassword === newPassword) {
+        res.status(400).json({ error: 'New password must be different from the current password.' });
+        return;
+    }
+
+    try {
+        const [users]: any = await pool.query(
+            'SELECT password FROM meddolic_user_details WHERE member_id = ? LIMIT 1',
+            [memberId]
+        );
+        if (users.length === 0) {
+            res.status(404).json({ error: 'User account not found.' });
+            return;
+        }
+
+        const storedPassword = String(users[0].password ?? '');
+        const isHashedPassword = /^\$2[aby]\$/.test(storedPassword);
+        const passwordMatches = isHashedPassword
+            ? await bcrypt.compare(currentPassword, storedPassword)
+            : currentPassword.trim() === storedPassword.trim();
+        if (!passwordMatches) {
+            res.status(400).json({ error: 'Current password is incorrect.' });
+            return;
+        }
+
+        await pool.query(
+            'UPDATE meddolic_user_details SET password = ? WHERE member_id = ?',
+            [newPassword, memberId]
+        );
+        res.status(200).json({ message: 'Login password updated successfully.' });
+    } catch (error: any) {
+        console.error('Login password update error:', error.message);
+        res.status(500).json({ error: 'Failed to update login password.' });
+    }
+});
+
+router.put('/profile', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+    const memberId = req.user?.id ?? req.user?.memberId;
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+
+    if (memberId == null) {
+        res.status(401).json({ error: 'Invalid session token.' });
+        return;
+    }
+    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        res.status(400).json({ error: 'Enter a valid name and email address.' });
+        return;
+    }
+
+    try {
+        await pool.query(
+            'UPDATE meddolic_user_details SET name = ?, email_id = ? WHERE member_id = ?',
+            [name, email, memberId]
+        );
+        const [users]: any = await pool.query(
+            'SELECT name, email_id AS email FROM meddolic_user_details WHERE member_id = ? LIMIT 1',
+            [memberId]
+        );
+        if (users.length === 0) {
+            res.status(404).json({ error: 'User profile not found.' });
+            return;
+        }
+        if (users[0].name !== name || users[0].email !== email) {
+            res.status(500).json({ error: 'Profile changes were not saved. Please try again.' });
+            return;
+        }
+
+        res.status(200).json({
+            message: 'Profile updated successfully.',
+            user: { name: users[0].name, email: users[0].email }
+        });
+    } catch (error: any) {
+        console.error('Profile update error:', error.message);
+        res.status(500).json({ error: 'Failed to update profile.' });
+    }
+});
 
 router.get('/daily-income', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -272,6 +518,7 @@ router.get('/', verifyToken, async (req: AuthRequest, res: Response): Promise<vo
                 id: u.member_id,
                 name: u.name || 'Rexler User',
                 email: u.email_id || u.email,
+                phone: u.phone || '',
                 userId: userIdStr,
                 memberId: u.member_id,
                 topupFlag: u.topup_flag !== undefined ? Number(u.topup_flag) : 0,
@@ -290,7 +537,7 @@ router.get('/', verifyToken, async (req: AuthRequest, res: Response): Promise<vo
                 totalTeam,
                 activeTeam,
                 inActiveTeam,
-                created_at: u.date_time || u.activation_date || u.registerDueDate
+                created_at: u.activation_date || u.date_time || u.registerDueDate
             }
         });
     } catch (error: any) {

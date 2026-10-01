@@ -1,0 +1,211 @@
+.income-transfer-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #172033;
+}
+
+.income-transfer-panel {
+  width: min(100%, 570px);
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(27, 38, 75, 0.06);
+}
+
+.income-transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.income-transfer-form label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.income-transfer-form label b {
+  color: #dc2626;
+}
+
+.income-transfer-form input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d9deea;
+  border-radius: 4px;
+  padding: 9px 10px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  font-size: 13px;
+}
+
+.income-transfer-form input[readonly] {
+  background: #f7f8fb;
+  color: #566176;
+}
+
+.income-transfer-form input:focus {
+  border-color: #7664ff;
+  outline: 2px solid rgba(118, 100, 255, 0.13);
+}
+
+.income-transfer-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: 4px;
+  padding: 10px;
+  background: #f7f8fc;
+  color: #596579;
+  font-size: 12px;
+}
+
+.income-transfer-breakdown span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.income-transfer-breakdown strong {
+  color: #172033;
+  white-space: nowrap;
+}
+
+.income-transfer-submit {
+  display: inline-flex;
+  min-width: 82px;
+  min-height: 36px;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 13px;
+  background: #7061ff;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.income-transfer-submit:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.income-transfer-history {
+  width: 100%;
+}
+
+.income-transfer-history-heading {
+  padding: 17px 20px;
+  border-bottom: 1px solid #e7eaf2;
+}
+
+.income-transfer-history-heading h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.income-transfer-table-scroll {
+  overflow-x: auto;
+  padding: 12px 16px;
+}
+
+.income-transfer-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #344054;
+  font-size: 12px;
+  text-align: left;
+}
+
+.income-transfer-table-scroll th,
+.income-transfer-table-scroll td {
+  border-bottom: 1px solid #e8ebf2;
+  padding: 10px 9px;
+}
+
+.income-transfer-table-scroll th {
+  background: #f8f9fc;
+  color: #39465c;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.income-transfer-amount {
+  display: inline-block;
+  border-radius: 12px;
+  padding: 4px 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.income-transfer-empty {
+  height: 52px;
+  color: #7b8494;
+  text-align: center;
+}
+
+.income-transfer-alert,
+.income-transfer-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.income-transfer-alert.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.income-transfer-alert.success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.income-transfer-loading {
+  min-height: 100px;
+  justify-content: center;
+  color: #687386;
+}
+
+.income-transfer-spinner {
+  flex: 0 0 auto;
+  animation: income-transfer-spin 0.9s linear infinite;
+}
+
+@keyframes income-transfer-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .income-transfer-history-heading {
+    padding: 14px;
+  }
+
+  .income-transfer-table-scroll {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}

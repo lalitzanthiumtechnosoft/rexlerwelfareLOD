@@ -1,0 +1,404 @@
+.fund-request-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #172033;
+}
+
+.fund-request-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.fund-request-panel {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(27, 38, 75, 0.06);
+}
+
+.fund-request-panel-heading {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e7eaf2;
+}
+
+.fund-request-panel-heading h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.fund-request-wallet {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #596579;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.fund-request-wallet strong {
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: #36b34a;
+  color: #fff;
+  font-size: 11px;
+}
+
+.fund-request-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.fund-request-form label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fund-request-form label b {
+  color: #dc2626;
+}
+
+.fund-request-form input,
+.fund-request-form select,
+.fund-request-form textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d9deea;
+  border-radius: 4px;
+  padding: 9px 10px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  font-size: 13px;
+}
+
+.fund-request-form textarea {
+  resize: vertical;
+}
+
+.fund-request-form input:focus,
+.fund-request-form select:focus,
+.fund-request-form textarea:focus {
+  border-color: #7664ff;
+  outline: 2px solid rgba(118, 100, 255, 0.13);
+}
+
+.fund-request-form input[readonly],
+.fund-request-form input:disabled,
+.fund-request-form select:disabled {
+  background: #f7f8fb;
+  color: #697386;
+}
+
+.fund-request-file-control {
+  position: relative;
+  display: flex;
+  min-height: 39px;
+  align-items: center;
+  gap: 9px;
+  overflow: hidden;
+  border: 1px solid #d9deea;
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: #5f6b7d;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.fund-request-file-control input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.fund-request-submit,
+.fund-request-receipt-btn {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 4px;
+  background: #7061ff;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fund-request-submit {
+  align-self: flex-start;
+  min-width: 96px;
+  padding: 0 15px;
+}
+
+.fund-request-submit:disabled,
+.fund-request-receipt-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.fund-request-payment-panel {
+  min-height: 120px;
+}
+
+.fund-request-payment-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  color: #344054;
+  font-size: 13px;
+}
+
+.fund-request-qr {
+  width: min(100%, 220px);
+  max-height: 220px;
+  align-self: center;
+  object-fit: contain;
+}
+
+.fund-request-address {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+  border: 1px solid #e4e7ef;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 12px;
+}
+
+.fund-request-address span {
+  flex: 1;
+}
+
+.fund-request-address button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: #f0efff;
+  color: #6252ed;
+  cursor: pointer;
+}
+
+.fund-request-empty,
+.fund-request-loading {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #687386;
+  font-size: 13px;
+}
+
+.fund-request-loading {
+  min-height: 120px;
+}
+
+.fund-request-spinner {
+  flex: 0 0 auto;
+  animation: fund-request-spin 0.9s linear infinite;
+}
+
+@keyframes fund-request-spin {
+  to { transform: rotate(360deg); }
+}
+
+.fund-request-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.fund-request-alert.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.fund-request-alert.success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.fund-request-alert.pending-notice {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.fund-request-history-panel {
+  padding-bottom: 8px;
+}
+
+.fund-request-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding: 12px 16px 8px;
+}
+
+.fund-request-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #344054;
+  font-size: 12px;
+  text-align: left;
+}
+
+.fund-request-table th,
+.fund-request-table td {
+  max-width: 210px;
+  border-bottom: 1px solid #e8ebf2;
+  padding: 10px 9px;
+  vertical-align: middle;
+}
+
+.fund-request-table th {
+  background: #f8f9fc;
+  color: #39465c;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fund-request-hash {
+  overflow-wrap: anywhere;
+}
+
+.fund-request-receipt-btn {
+  min-height: 30px;
+  padding: 0 9px;
+  white-space: nowrap;
+}
+
+.fund-request-status {
+  display: inline-block;
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.fund-request-status.pending {
+  background: #fff7d6;
+  color: #8a5b00;
+}
+
+.fund-request-status.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.fund-request-status.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.fund-request-no-data {
+  height: 56px;
+  color: #7b8494;
+  text-align: center;
+}
+
+.fund-request-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.fund-request-receipt-modal {
+  display: flex;
+  width: min(720px, 100%);
+  max-height: 90vh;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.fund-request-receipt-modal > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e7eaf2;
+}
+
+.fund-request-receipt-modal > div strong {
+  flex: 1;
+  font-size: 14px;
+}
+
+.fund-request-receipt-modal > div button {
+  border: 0;
+  background: transparent;
+  color: #6252ed;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.fund-request-receipt-modal > img {
+  max-width: 100%;
+  max-height: calc(90vh - 50px);
+  align-self: center;
+  object-fit: contain;
+}
+
+@media (max-width: 900px) {
+  .fund-request-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .fund-request-panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .fund-request-table-scroll {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}
